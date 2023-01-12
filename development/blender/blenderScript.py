@@ -3,6 +3,7 @@ import math
 import random
 import numpy as np
 import mathutils
+import os
 
 def renderModel(output_path):
     # Spotlight properties
@@ -70,6 +71,12 @@ def renderModel(output_path):
     cam1.lens = focal_length
 
     # Add materials to the cube
+    #bpy.ops.image.open(filepath="//..\\..\\..\\speckle\\images\\im4.tiff",
+    #directory="E:\\GitHub\\speckle\\images\\", 
+    #files=[{"name":"im4.tiff", "name":"im4.tiff"}], 
+    #relative_path=True, 
+    #show_multiview=False)
+
 
     # Render image and save
     bpy.context.scene.render.filepath = output_path
@@ -79,6 +86,10 @@ def renderModel(output_path):
     bpy.context.scene.render.image_settings.compression = 0
     bpy.ops.render.render(write_still=True)    
     
-for ii in range(10):
-    output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{ii}.tiff'
+for ii in range(1):
+    k = ii
+    output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{k}.tiff'
+    while os.path.exists(output_path):
+        k += 1
+        output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{k}.tiff'
     renderModel(output_path)    
