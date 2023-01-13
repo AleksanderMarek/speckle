@@ -71,11 +71,14 @@ def renderModel(output_path):
     cam1.lens = focal_length
 
     # Add materials to the cube
-    #bpy.ops.image.open(filepath="//..\\..\\..\\speckle\\images\\im4.tiff",
-    #directory="E:\\GitHub\\speckle\\images\\", 
-    #files=[{"name":"im4.tiff", "name":"im4.tiff"}], 
-    #relative_path=True, 
-    #show_multiview=False)
+    #im1 = bpy.ops.image.load("//..\\..\\..\\speckle\\images\\im4.tiff")
+    #mat = bpy.data.materials.new(name="New_Mat")
+    #mat.use_nodes = True
+    #bsdf = mat.node_tree.nodes["Principled BSDF"]
+    #texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    #texImage.image = bpy.data.images.load("D:\\Cool Projects\\Paperspace\\3-D Models\\Background.jpg")
+    #mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
+    #ob = context.view_layer.objects.active
 
 
     # Render image and save
@@ -86,7 +89,7 @@ def renderModel(output_path):
     bpy.context.scene.render.image_settings.compression = 0
     bpy.ops.render.render(write_still=True)    
     
-for ii in range(1):
+for ii in range(5):
     k = ii
     output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{k}.tiff'
     while os.path.exists(output_path):
