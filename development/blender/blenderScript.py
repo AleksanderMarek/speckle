@@ -5,14 +5,11 @@ import numpy as np
 import mathutils
 import os
 
-""" To do:
-    -Might change uniform distributions of variables to normally-distributed
-    centered around parameters leading to reasonable (good) image quality 
-    -Build the model from scratch so that it can be run from python directly
+""" This script drive focus_tutorial.blend model and generates
+rendered image of a speckle pattern
 """
-    
 
-def renderModel(output_path):
+def blender_render_model(output_path, pattern_path):
     # Spotlight properties
     # Shape and energy
     spot_variation = 5
@@ -70,7 +67,7 @@ def renderModel(output_path):
 
     # Camera properties
     # Add camera location
-    fstop_variation = 8.0
+    fstop_variation = 16.0
     fstop = random.uniform(0, fstop_variation)
     focal_length = 50.0
     cam1 = bpy.data.cameras['Camera']
@@ -86,6 +83,9 @@ def renderModel(output_path):
     #texImage.image = bpy.data.images.load("D:\\Cool Projects\\Paperspace\\3-D Models\\Background.jpg")
     #mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
     #ob = context.view_layer.objects.active
+    mat = bpy.data.materials["Material"]
+    texImage = mat.node_tree.nodes["Image Texture"]
+    texImage.image = bpy.data.images.load(pattern_path)
 
 
     # Render image and save
@@ -95,11 +95,16 @@ def renderModel(output_path):
     bpy.context.scene.render.image_settings.color_depth = '8'
     bpy.context.scene.render.image_settings.compression = 0
     bpy.ops.render.render(write_still=True)    
-    
-for ii in range(5):
+
+
+"""    
+for ii in range(1,5):
     k = ii
-    output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{k}.tiff'
+    output_path = f'E:\\GitHub\\speckle\\rendered_images\\test_{k}.tiff'
+    pattern_path = f"E:\\GitHub\speckle\\speckle_images\\im{k}.tiff"
     while os.path.exists(output_path):
         k += 1
         output_path = f'E:\\GitHub\\speckle\\development\\blender\\test_{k}.tiff'
-    renderModel(output_path)    
+    blender_render_model(output_path, pattern_path)
+    
+"""        

@@ -1,0 +1,6 @@
+bpy==2.82.1
+mathutils==3.3.0
+matplotlib==3.5.3
+numpy==1.21.6
+Pillow==9.4.0
+setuptools==65.5.0

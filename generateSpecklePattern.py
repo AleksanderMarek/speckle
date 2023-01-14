@@ -19,7 +19,7 @@ speckle_size = 4;
 fft_threshold = 4
 output_DPI = 600
 target_size = (100, 100)
-target_path = 'E:\\GitHub\\speckle\\speckle_images\\im4.tiff'
+target_path = 'E:\\GitHub\\speckle\\speckle_images\\im5.tiff'
 
 imaging_dist = 1000
 focal_length = 50
@@ -31,6 +31,9 @@ speckle_size = 5*pixel_size
 
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
-im1 = pat1.gen_pattern()
-pat1.im_show()
-pat1.im_save(target_path)
+#im1 = pat1.gen_pattern()
+#pat1.im_show()
+#pat1.im_save(target_path)
+
+output_path = r"E:\GitHub\speckle\rendered_images\im3.tiff"
+speckle.blender_render_model(output_path, target_path)
