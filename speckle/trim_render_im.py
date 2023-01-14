@@ -11,6 +11,7 @@ For now hard coded for the initial input images from blender
 """
 
 def trim_render_im(im_input_path, output_folder, window_size = 500):
+    im_root = 'im'
     im_input = Image.open(im_input_path)
     im_input = np.asarray(im_input)
     # Loop over 4 subimages and save each separately
@@ -23,15 +24,14 @@ def trim_render_im(im_input_path, output_folder, window_size = 500):
                 crop_start_Y+window_size*j:crop_start_Y+window_size*(j+1),
                 crop_start_X+window_size*i:crop_start_X+window_size*(i+1)]
             im = Image.fromarray(im_cropped, mode='L')
-            path = output_folder+f"im_{i*2+j}.tiff"
-            path = generate_output_name(output_folder)
+            path = generate_output_name(output_folder, im_root)
             im.save(path)        
             
-def generate_output_name(output_folder):
+def generate_output_name(output_folder, im_root):
     # Check how many files are already in the output_folder
-    files = glob.glob(output_folder + "\\im_*.tiff")
+    files = glob.glob(output_folder + f"\\{im_root}_*.tiff")
     new_im_num = len(files) + 1
-    path = output_folder + f"\\im_{new_im_num}.tiff"
+    path = output_folder + f"\\{im_root}_{new_im_num}.tiff"
     return path
         
         
