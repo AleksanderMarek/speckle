@@ -88,3 +88,13 @@ class SpeckleImage:
     def im_save(self, path):
         im = Image.fromarray(self.pattern*255, mode='L')
         im.save(path)
+        
+    # Set canvas size, speckle size and DPI based on physical dimensions
+    def set_physical_dim(self, physical_size, speckle_size, DPI):
+        # Adjust image_size based on the desired physical size and DPI
+        image_size = (math.ceil(physical_size[0]/25.4*DPI),
+                      math.ceil(physical_size[1]/25.4*DPI))
+        self.image_size = image_size
+        speckle_size_px = speckle_size/25.4*DPI
+        self.speckle_size = speckle_size_px
+        self.DPI = DPI
