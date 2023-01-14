@@ -145,8 +145,8 @@ def blender_render_model(output_path, pattern_path):
     bpy.context.scene.cycles.samples = 64
     bpy.context.scene.render.use_border = True
     bpy.ops.render.render(write_still=True)    
-    bpy.ops.wm.save_as_mainfile(
-        filepath=r"E:\GitHub\speckle\development\blender\test1.blend")
+    #bpy.ops.wm.save_as_mainfile(
+    #    filepath=r"E:\GitHub\speckle\development\blender\test1.blend")
 
 
 """    
