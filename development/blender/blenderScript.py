@@ -5,6 +5,13 @@ import numpy as np
 import mathutils
 import os
 
+""" To do:
+    -Might change uniform distributions of variables to normally-distributed
+    centered around parameters leading to reasonable (good) image quality 
+    -Build the model from scratch so that it can be run from python directly
+"""
+    
+
 def renderModel(output_path):
     # Spotlight properties
     # Shape and energy
