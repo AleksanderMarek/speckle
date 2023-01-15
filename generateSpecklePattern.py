@@ -15,6 +15,16 @@ train the net
     -Develop robust loging of generation parameters so that each training image
     can be linked directly to the optimised speckle generator input and 
     blender input
+    -Improve lighting model: Current idea is to have the following structure:
+        -Add Diffuse bsdf 
+        -Add normal map (based on gradient of the original speckle pattern
+            or similar map (can be anything, maybe add median filter
+            to have regions more clumped)
+        -Combine Diffuse and Principled BSDFs together, with more on diffuse side
+        -Reduce sun energy to provide background (small illumination)
+        -Add large energy to the spotlight to create uneven light based on random
+            normals map. Remember to make spotlight wider and possibly aim
+            outside of the object to add more realism
 """    
 
 # Define properties of the original speckle pattern
