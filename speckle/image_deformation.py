@@ -26,10 +26,10 @@ def image_deformation(im_path, imdef_inp, corr_inp):
     os.system(shell_cmd)
     # Import the results
     target_U = 0.382;
-    results_path = r"D:\Experiment Quality\ImDef\im_deformed_1_0.def.csv"
+    results_path = r"D:\Experiment Quality\ImDef\u\im_deformed_1_0.def_u.csv"
     results = genfromtxt(results_path, delimiter=',')
     if len(results.shape) == 2:
-        U = results[1:,2]
+        U = np.reshape(results, -1)
         U_corrected = np.nan_to_num(U)
         mean_U = np.mean(U_corrected)
         noise_floor = \

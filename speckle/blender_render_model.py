@@ -23,7 +23,7 @@ def blender_render_model(output_path, pattern_path):
     spot_variation = 5
     spot_size = math.radians(10 + random.uniform(-1, 1)*spot_variation)
     spot_blend = random.uniform(0, 1)
-    spot_energy_variation = 25.0
+    spot_energy_variation = 20.0
     spot_energy = random.uniform(0, spot_energy_variation)
     shadow_spot_size = random.uniform(0.001, 0.05)
     # Position
@@ -83,8 +83,8 @@ def blender_render_model(output_path, pattern_path):
     bpy.context.collection.objects.link(light1_ob)
     light1_ob.location = (-1, -1, 0)
     light1_ob.rotation_euler = (math.radians(89.5), 0, math.radians(-33.4))
-    light_variation = 10.0
-    light_energy = 5.0 + random.uniform(-1, 1)*light_variation
+    light_variation = 5.0
+    light_energy = 4.0 + random.uniform(-1, 1)*light_variation
     light1.energy = light_energy
     light1.angle = math.radians(12)
 
@@ -149,8 +149,9 @@ def blender_render_model(output_path, pattern_path):
     bpy.context.scene.render.image_settings.compression = 0
     bpy.context.scene.render.engine = 'CYCLES' #Working
     bpy.context.scene.cycles.device = 'GPU'
-    bpy.context.scene.cycles.samples = 256
+    bpy.context.scene.cycles.samples = 200
     bpy.context.scene.cycles.use_denoising = True
+    bpy.context.scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
     bpy.context.scene.render.use_border = True
     bpy.ops.render.render(write_still=True)    
     #bpy.ops.wm.save_as_mainfile(
