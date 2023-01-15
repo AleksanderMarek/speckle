@@ -24,7 +24,8 @@ def blender_render_model(output_path, pattern_path):
     spot_size = math.radians(10 + random.uniform(-1, 1)*spot_variation)
     spot_blend = random.uniform(0, 1)
     spot_energy_variation = 25.0
-    spot_energy = 35.0 + random.uniform(-1, 1)*spot_energy_variation
+    spot_energy = random.uniform(0, spot_energy_variation)
+    shadow_spot_size = random.uniform(0.001, 0.05)
     # Position
     polar_ang_variation = 60
     azim_ang_variation = 30
@@ -70,6 +71,8 @@ def blender_render_model(output_path, pattern_path):
     light.spot_size = spot_size
     light.spot_blend = spot_blend
     light.energy = spot_energy
+    light.shadow_soft_size = shadow_spot_size
+
 
     # Background light properties
     # Set light location
@@ -88,7 +91,7 @@ def blender_render_model(output_path, pattern_path):
     # Camera properties
     # Add camera location
     fstop_variation = 24.0
-    fstop = random.uniform(0, fstop_variation)
+    fstop = random.uniform(2.0, fstop_variation)
     focal_length = 50.0
     camera = bpy.data.objects.new("Camera", bpy.data.cameras.new("Camera"))
     bpy.context.collection.objects.link(camera)
@@ -146,7 +149,8 @@ def blender_render_model(output_path, pattern_path):
     bpy.context.scene.render.image_settings.compression = 0
     bpy.context.scene.render.engine = 'CYCLES' #Working
     bpy.context.scene.cycles.device = 'GPU'
-    bpy.context.scene.cycles.samples = 64
+    bpy.context.scene.cycles.samples = 256
+    bpy.context.scene.cycles.use_denoising = True
     bpy.context.scene.render.use_border = True
     bpy.ops.render.render(write_still=True)    
     #bpy.ops.wm.save_as_mainfile(

@@ -33,7 +33,7 @@ def image_deformation(im_path, imdef_inp, corr_inp):
         U_corrected = np.nan_to_num(U)
         mean_U = np.mean(U_corrected)
         noise_floor = \
-            np.linalg.norm(U_corrected - target_U) / U_corrected.shape[0]
+            np.linalg.norm(U_corrected - target_U) / U_corrected.shape[0]**0.5
     else:
         mean_U = 0.0
         noise_floor = target_U        
