@@ -20,6 +20,7 @@ train the net
 # Define properties of the original speckle pattern
 bin_thres_low = np.random.normal(0.1, 0.02)
 bin_thres_high = np.random.normal(0.7, 0.008)
+speckle_noise = 4.0
 imaging_dist = 1000
 focal_length = 50
 M = focal_length / (imaging_dist - focal_length)
@@ -32,12 +33,12 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 25
+n_speckles = 50
 
 # Define properties of the render
 render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
-n_renders = 25
+n_renders = 10
 
 # Define properties of training images
 output_folder = 'D:\Experiment Quality\input_images'
@@ -55,8 +56,9 @@ for ii in range(n_speckles):
         raw_speckle_folder, raw_speckle_prefix)
     speckle_size = random.uniform(3,7)*pixel_size
     pat1 = speckle.SpeckleImage(image_size, speckle_size,
-                                binary_high = bin_thres_high,
-                                binary_low = bin_thres_low)
+                                binary_high=bin_thres_high,
+                                binary_low=bin_thres_low,
+                                noise_mag=speckle_noise)
     pat1.set_physical_dim(target_size, speckle_size, output_DPI)
     im1 = pat1.gen_pattern()
     pat1.im_save(raw_speckle_path)

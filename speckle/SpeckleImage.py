@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 class SpeckleImage:
     # Constructor
     def __init__(self, image_size, speckle_size, algorithm='optim', 
-                 DPI=450, binary_high=1, binary_low=0):
+                 DPI=450, binary_high=1, binary_low=0, noise_mag=None):
         image_size = tuple(tuple(map(int, image_size)))
         self.image_size = image_size
         self.speckle_size = speckle_size
@@ -27,6 +27,7 @@ class SpeckleImage:
         self.DPI = DPI
         self.binarised_high = binary_high
         self.binarised_low = binary_low
+        self.noise_mag = noise_mag
         
     # Generate raw speckle pattern given properties
     def gen_pattern(self):
@@ -81,7 +82,12 @@ class SpeckleImage:
                      / (np.max(speckle_im)-np.min(speckle_im))
         self.pattern = (np.where(speckle_im > 0.5,
                                 self.binarised_high, 
-                                self.binarised_low)*256).astype('uint8')  
+                                self.binarised_low)*256).astype('uint8')
+        if self.noise_mag is not None:
+            self.pattern += np.random.normal(
+                                0, 
+                                self.noise_mag, 
+                                size=self.pattern.shape).astype('uint8')
 
     # Plots the image of the pattern
     def im_show(self):
@@ -102,3 +108,4 @@ class SpeckleImage:
         speckle_size_px = speckle_size/25.4*DPI
         self.speckle_size = speckle_size_px
         self.DPI = DPI
+        
