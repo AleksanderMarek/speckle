@@ -90,8 +90,8 @@ def blender_render_model(output_path, pattern_path):
 
     # Camera properties
     # Add camera location
-    fstop_variation = 24.0
-    fstop = random.uniform(2.0, fstop_variation)
+    fstop_variation = 30.0
+    fstop = random.uniform(5.0, fstop_variation)
     focal_length = 50.0
     camera = bpy.data.objects.new("Camera", bpy.data.cameras.new("Camera"))
     bpy.context.collection.objects.link(camera)
@@ -149,7 +149,7 @@ def blender_render_model(output_path, pattern_path):
     bpy.context.scene.render.image_settings.compression = 0
     bpy.context.scene.render.engine = 'CYCLES' #Working
     bpy.context.scene.cycles.device = 'GPU'
-    bpy.context.scene.cycles.samples = 200
+    bpy.context.scene.cycles.samples = 300
     bpy.context.scene.cycles.use_denoising = True
     bpy.context.scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
     bpy.context.scene.render.use_border = True

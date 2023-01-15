@@ -1,6 +1,7 @@
 import speckle
 import random
 import csv 
+import numpy as np
 
 """ This script generates training images for qe-net. First a synthetic
 speckle pattern is generated using a FFT-based algorithm. Then, the pattern
@@ -17,6 +18,8 @@ train the net
 """    
 
 # Define properties of the original speckle pattern
+bin_thres_low = np.random.normal(0.1, 0.02)
+bin_thres_high = np.random.normal(0.7, 0.008)
 imaging_dist = 1000
 focal_length = 50
 M = focal_length / (imaging_dist - focal_length)
@@ -51,7 +54,9 @@ for ii in range(n_speckles):
     raw_speckle_path = speckle.generate_output_name(
         raw_speckle_folder, raw_speckle_prefix)
     speckle_size = random.uniform(3,7)*pixel_size
-    pat1 = speckle.SpeckleImage(image_size, speckle_size)
+    pat1 = speckle.SpeckleImage(image_size, speckle_size,
+                                binary_high = bin_thres_high,
+                                binary_low = bin_thres_low)
     pat1.set_physical_dim(target_size, speckle_size, output_DPI)
     im1 = pat1.gen_pattern()
     pat1.im_save(raw_speckle_path)

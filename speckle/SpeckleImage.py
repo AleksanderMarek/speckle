@@ -18,13 +18,15 @@ from matplotlib import pyplot as plt
 class SpeckleImage:
     # Constructor
     def __init__(self, image_size, speckle_size, algorithm='optim', 
-                 DPI=450):
+                 DPI=450, binary_high=1, binary_low=0):
         image_size = tuple(tuple(map(int, image_size)))
         self.image_size = image_size
         self.speckle_size = speckle_size
         self.algorithm = algorithm
         self.pattern = None
         self.DPI = DPI
+        self.binarised_high = binary_high
+        self.binarised_low = binary_low
         
     # Generate raw speckle pattern given properties
     def gen_pattern(self):
@@ -77,7 +79,9 @@ class SpeckleImage:
         # Adjust histogram and binarize the result
         speckle_im = (speckle_im-np.min(speckle_im)) \
                      / (np.max(speckle_im)-np.min(speckle_im))
-        self.pattern = np.where(speckle_im > 0.5, 1, 0).astype('uint8')  
+        self.pattern = (np.where(speckle_im > 0.5,
+                                self.binarised_high, 
+                                self.binarised_low)*256).astype('uint8')  
 
     # Plots the image of the pattern
     def im_show(self):
