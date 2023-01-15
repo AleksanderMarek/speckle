@@ -17,6 +17,7 @@ def trim_render_im(im_input_path, output_folder, window_size = 500):
     # Loop over 4 subimages and save each separately
     crop_start_X = math.floor(im_input.shape[1]/2-window_size)
     crop_start_Y = math.floor(im_input.shape[0]/2-window_size)
+    im_list = []
     for i in range(2):
         for j in range(2):
             im_cropped = \
@@ -26,6 +27,8 @@ def trim_render_im(im_input_path, output_folder, window_size = 500):
             im = Image.fromarray(im_cropped, mode='L')
             path = generate_output_name(output_folder, im_root)
             im.save(path)        
+            im_list.append(path)
+    return im_list        
             
 def generate_output_name(output_folder, im_root):
     # Check how many files are already in the output_folder

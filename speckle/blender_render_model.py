@@ -116,6 +116,10 @@ def blender_render_model(output_path, pattern_path):
     mat = bpy.data.materials.new(name="Material")
     mat.use_nodes = True
     bsdf = mat.node_tree.nodes["Principled BSDF"]
+    bsdf.inputs[6].default_value = 0.8 # metallic
+    bsdf.inputs[7].default_value = 0.6 # specular
+    bsdf.inputs[9].default_value = 0.23 # roughness
+
     texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
     texImage = mat.node_tree.nodes["Image Texture"]
     texImage.image = bpy.data.images.load(pattern_path)

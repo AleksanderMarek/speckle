@@ -1,5 +1,6 @@
 import speckle
 import random
+import csv 
 
 """ This script generates training images for qe-net. First a synthetic
 speckle pattern is generated using a FFT-based algorithm. Then, the pattern
@@ -26,17 +27,24 @@ output_DPI = 600
 target_size = (100, 100)
 pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
-raw_speckle_folder = r'E:\GitHub\speckle\speckle_images'
+raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
 n_speckles = 1
 
 # Define properties of the render
-render_folder = r"E:\GitHub\speckle\rendered_images"
+render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
 n_renders = 2
 
 # Define properties of training images
-output_folder = 'E:\GitHub\speckle\input_images'
+output_folder = 'D:\Experiment Quality\input_images'
+
+# Define paths to MatchID input files
+imDef_inp = r"D:\Experiment Quality\ImDef\ImDef.mtind"
+corr_inp = r"D:\Experiment Quality\ImDef\Job.m2inp"
+
+# Define ledger of labels
+summary_path = r"D:\Experiment Quality\summary.csv"
 
 
 for ii in range(n_speckles):
@@ -51,7 +59,17 @@ for ii in range(n_speckles):
         render_path = speckle.generate_output_name(
             render_folder, render_prefix)
         speckle.blender_render_model(render_path, raw_speckle_path)
-        speckle.trim_render_im(render_path, output_folder)
+        output_paths = speckle.trim_render_im(render_path, output_folder)
+        for kk in range(len(output_paths)):
+            noise_floor, mean_U = \
+                speckle.image_deformation(output_paths[kk], 
+                                          imDef_inp, corr_inp)
+            record = [raw_speckle_path, render_path, 
+                      output_paths[kk], noise_floor, mean_U]    
+            with open(summary_path, 'a', newline='') as fd:
+                writer = csv.writer(fd)
+                writer.writerow(record)
+            
 
 
 
