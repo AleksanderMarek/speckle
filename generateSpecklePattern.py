@@ -29,12 +29,12 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 1
+n_speckles = 25
 
 # Define properties of the render
 render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
-n_renders = 2
+n_renders = 25
 
 # Define properties of training images
 output_folder = 'D:\Experiment Quality\input_images'
