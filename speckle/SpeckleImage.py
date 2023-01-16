@@ -4,7 +4,6 @@ correlation (DIC) setups
 
 
 TODO:
-    -Add a function to define image size based on physical dimensions
 """
 
 import math
@@ -12,13 +11,14 @@ import numpy as np
 import numpy.matlib 
 from PIL import Image
 from matplotlib import pyplot as plt
+from scipy import ndimage
 
 # Define class SpeckleImage that produces a bitmap corresponding to a random
 # speckle pattern with defined properties
 class SpeckleImage:
     # Constructor
     def __init__(self, image_size, speckle_size, algorithm='optim', 
-                 DPI=450, binary_high=1, binary_low=0, noise_mag=None):
+                 DPI=450, binary_high=1.0, binary_low=0.0, noise_mag=None):
         image_size = tuple(tuple(map(int, image_size)))
         self.image_size = image_size
         self.speckle_size = speckle_size
@@ -82,7 +82,7 @@ class SpeckleImage:
                      / (np.max(speckle_im)-np.min(speckle_im))
         self.pattern = (np.where(speckle_im > 0.5,
                                 self.binarised_high, 
-                                self.binarised_low)*256).astype('uint8')
+                                self.binarised_low)*255).astype('uint8')
         if self.noise_mag is not None:
             self.pattern += np.random.normal(
                                 0, 
@@ -96,7 +96,7 @@ class SpeckleImage:
         
     # Save the generated speckle pattern as an image
     def im_save(self, path):
-        im = Image.fromarray(self.pattern*255, mode='L')
+        im = Image.fromarray(self.pattern, mode='L')
         im.save(path)
         
     # Set canvas size, speckle size and DPI based on physical dimensions
@@ -109,3 +109,37 @@ class SpeckleImage:
         self.speckle_size = speckle_size_px
         self.DPI = DPI
         
+    # Calculate gradient of the pattern
+    def pattern_gradient(self):
+        # Get x-gradient in "sx"
+        sx = ndimage.sobel(self.pattern,axis=0,mode='constant')
+        # Get y-gradient in "sy"
+        sy = ndimage.sobel(self.pattern,axis=1,mode='constant')
+        # Get square root of sum of squares
+        self.gradient = np.hypot(sx,sy)
+        self.gradient = (np.where(self.gradient > 128,
+                                self.binarised_high, 
+                                self.binarised_low)*255).astype('uint8')
+        
+    # Save gradient image
+    def grad_save(self, path):
+        im = Image.fromarray(self.norm_map, mode='RGB')
+        im.save(path)
+    
+    # Generate normals map based on the gradient pattern    
+    def generate_norm_map(self):
+        mat_one = np.ones((self.pattern.shape[0], self.pattern.shape[1], 1))
+        # R channel
+        mean_mat = mat_one * 127
+        std_mat = mat_one * 30 \
+            + np.multiply(mat_one, self.pattern)*30
+        R = np.random.normal(mean_mat, std_mat).astype('uint8')    
+        # G channel    
+        mean_mat = mat_one * 127
+        std_mat = mat_one * 30 \
+            + np.multiply(mat_one, self.pattern)*30
+        G = np.random.normal(mean_mat, std_mat).astype('uint8')    
+        # B channel
+        
+        self.norm_map = np.dstack([R, G, B])
+        self.norm_map = ndimage.median_filter(self.norm_map, 4)
