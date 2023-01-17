@@ -34,10 +34,12 @@ def image_deformation(im_path, imdef_inp, corr_inp):
         mean_U = np.mean(U_corrected)
         noise_floor = \
             np.linalg.norm(U_corrected - target_U) / U_corrected.shape[0]**0.5
+        std_U = np.nanstd(U);    
     else:
         mean_U = 0.0
-        noise_floor = target_U        
-    return noise_floor, mean_U
+        noise_floor = target_U      
+        std_U = 0.0
+    return noise_floor, mean_U, std_U
     
 def modify_MatchID_input(file_path, search_str, replace_str):
     with open(file_path, 'r') as file:
