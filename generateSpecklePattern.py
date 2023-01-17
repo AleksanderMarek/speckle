@@ -43,12 +43,13 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 50
+n_speckles = 10
+grad_path = r'D:\Experiment Quality\speckle_images\grad.tiff'
 
 # Define properties of the render
 render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
-n_renders = 10
+n_renders = 1
 
 # Define properties of training images
 output_folder = 'D:\Experiment Quality\input_images'
@@ -67,15 +68,20 @@ for ii in range(n_speckles):
     speckle_size = random.uniform(3,7)*pixel_size
     pat1 = speckle.SpeckleImage(image_size, speckle_size,
                                 binary_high=bin_thres_high,
-                                binary_low=bin_thres_low,
-                                noise_mag=speckle_noise)
+                                binary_low=bin_thres_low)
     pat1.set_physical_dim(target_size, speckle_size, output_DPI)
     im1 = pat1.gen_pattern()
     pat1.im_save(raw_speckle_path)
+    # Generate normal maps for rendering
+    pat2 = speckle.SpeckleImage(pat1.image_size, 60, normal_map_filter=5)
+    pat2.gen_pattern()
+    pat2.pattern_gradient()
+    pat2.generate_norm_map()
+    pat2.grad_save(grad_path)
     for jj in range(n_renders):
         render_path = speckle.generate_output_name(
             render_folder, render_prefix)
-        speckle.blender_render_model(render_path, raw_speckle_path)
+        speckle.blender_render_model(render_path, raw_speckle_path, grad_path)
         output_paths = speckle.trim_render_im(render_path, output_folder)
         for kk in range(len(output_paths)):
             noise_floor, mean_U = \
