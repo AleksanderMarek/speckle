@@ -23,8 +23,8 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     SPOT_DIST_VARIATION = 0.2
     SPOT_ANG_MEAN = 35
     SPOT_ANG_VARIATION = 10
-    SPOT_ENERGY_MEAN = 25
-    SPOT_ENERGY_VARIATION = 20
+    SPOT_ENERGY_MEAN = 20
+    SPOT_ENERGY_VARIATION = 10
     SPOT_SIZE_MIN = 0.0
     SPOT_SIZE_MAX = 0.01
     FSTOP_MIN = 4.0
@@ -40,8 +40,10 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     spot_size = math.radians(SPOT_ANG_MEAN \
                              + random.uniform(-1, 1)*SPOT_ANG_VARIATION)
     spot_blend = random.uniform(0, 1)
-    spot_energy = SPOT_ENERGY_MEAN \
-        +random.uniform(-1, 1)*SPOT_ENERGY_VARIATION
+    #spot_energy = SPOT_ENERGY_MEAN \
+    #    +random.uniform(-1, 1)*SPOT_ENERGY_VARIATION
+    spot_energy = random.normalvariate(SPOT_ENERGY_MEAN, 
+                                       SPOT_ENERGY_VARIATION)
     shadow_spot_size = random.uniform(SPOT_SIZE_MIN, SPOT_SIZE_MAX)
     # Position
     polar_ang_variation = 60
@@ -53,9 +55,9 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     y = spot_dist * math.sin(polar_ang) * math.sin(azim_ang)
     z = spot_dist * math.cos(azim_ang)
     spot_loc = (x, y, z)
-    target = (random.uniform(-0.05, 0.05),
+    target = (random.uniform(-0.075, 0.075),
               0,
-              random.uniform(-0.05, 0.05))
+              random.uniform(-0.075, 0.075))
     # Rotation of the spotlight
     ray_direction = np.array(
         [target[0] - spot_loc[0],

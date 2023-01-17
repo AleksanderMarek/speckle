@@ -2,6 +2,7 @@ import speckle
 import random
 import csv 
 import numpy as np
+import glob
 
 """ This script generates training images for qe-net. First a synthetic
 speckle pattern is generated using a FFT-based algorithm. Then, the pattern
@@ -15,16 +16,6 @@ train the net
     -Develop robust loging of generation parameters so that each training image
     can be linked directly to the optimised speckle generator input and 
     blender input
-    -Improve lighting model: Current idea is to have the following structure:
-        -Add Diffuse bsdf 
-        -Add normal map (based on gradient of the original speckle pattern
-            or similar map (can be anything, maybe add median filter
-            to have regions more clumped)
-        -Combine Diffuse and Principled BSDFs together, with more on diffuse side
-        -Reduce sun energy to provide background (small illumination)
-        -Add large energy to the spotlight to create uneven light based on random
-            normals map. Remember to make spotlight wider and possibly aim
-            outside of the object to add more realism
 """    
 
 # Define properties of the original speckle pattern
@@ -43,13 +34,13 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 1
+n_speckles = 40
 grad_path = r'D:\Experiment Quality\speckle_images\grad.tiff'
 
 # Define properties of the render
 render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
-n_renders = 1
+n_renders = 5
 
 # Define properties of training images
 output_folder = 'D:\Experiment Quality\input_images'
@@ -61,11 +52,10 @@ corr_inp = r"D:\Experiment Quality\ImDef\Job.m2inp"
 # Define ledger of labels
 summary_path = r"D:\Experiment Quality\summary.csv"
 
-
 for ii in range(n_speckles):
     raw_speckle_path = speckle.generate_output_name(
         raw_speckle_folder, raw_speckle_prefix)
-    speckle_size = random.uniform(3,7)*pixel_size
+    speckle_size = random.uniform(2, 9)*pixel_size
     pat1 = speckle.SpeckleImage(image_size, speckle_size,
                                 binary_high=bin_thres_high,
                                 binary_low=bin_thres_low)
