@@ -18,7 +18,8 @@ from scipy import ndimage
 class SpeckleImage:
     # Constructor
     def __init__(self, image_size, speckle_size, algorithm='optim', 
-                 DPI=450, binary_high=1.0, binary_low=0.0, noise_mag=None):
+                 DPI=450, binary_high=1.0, binary_low=0.0, noise_mag=None,
+                 normal_map_filter=3):
         image_size = tuple(tuple(map(int, image_size)))
         self.image_size = image_size
         self.speckle_size = speckle_size
@@ -28,6 +29,7 @@ class SpeckleImage:
         self.binarised_high = binary_high
         self.binarised_low = binary_low
         self.noise_mag = noise_mag
+        self.normal_map_filter = normal_map_filter
         
     # Generate raw speckle pattern given properties
     def gen_pattern(self):
@@ -132,14 +134,15 @@ class SpeckleImage:
         # R channel
         mean_mat = mat_one * 127
         std_mat = mat_one * 30 \
-            + np.multiply(mat_one, self.pattern)*30
+            + np.multiply(mat_one, self.pattern[:, :, None])*30
         R = np.random.normal(mean_mat, std_mat).astype('uint8')    
         # G channel    
         mean_mat = mat_one * 127
         std_mat = mat_one * 30 \
-            + np.multiply(mat_one, self.pattern)*30
+            + np.multiply(mat_one, self.pattern[:, :, None])*30
         G = np.random.normal(mean_mat, std_mat).astype('uint8')    
         # B channel
-        
+        B = np.random.uniform(0, 255, mat_one.shape).astype('uint8')     
         self.norm_map = np.dstack([R, G, B])
-        self.norm_map = ndimage.median_filter(self.norm_map, 4)
+        self.norm_map = ndimage.median_filter(self.norm_map,
+                                              self.normal_map_filter)
