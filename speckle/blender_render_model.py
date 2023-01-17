@@ -17,13 +17,14 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     # Define constants
     DIFFUSE_ROUGHNESS = 0.5
     GLOSSY_ROUGHNESS = 0.2
-    SHADER_MIX_RATIO = 0.95
+    SHADER_MIX_RATIO_MAX = 0.95
+    SHADER_MIX_RATIO_MIN = 0.4
     SPOT_DIST_MEAN = 0.5
     SPOT_DIST_VARIATION = 0.2
     SPOT_ANG_MEAN = 35
     SPOT_ANG_VARIATION = 10
-    SPOT_ENERGY_MEAN = 60
-    SPOT_ENERGY_VARIATION = 25
+    SPOT_ENERGY_MEAN = 25
+    SPOT_ENERGY_VARIATION = 20
     SPOT_SIZE_MIN = 0.0
     SPOT_SIZE_MAX = 0.01
     FSTOP_MIN = 4.0
@@ -152,8 +153,8 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     texImage = tree.nodes.new('ShaderNodeTexImage')
     texImage.image = bpy.data.images.load(pattern_path)
     bpy.data.images[0].colorspace_settings.name = 'Non-Color'
-    #tree.links.new(bsdf_glossy.inputs['Color'], 
-    #                        texImage.outputs['Color'])
+    tree.links.new(bsdf_glossy.inputs['Color'], 
+                            texImage.outputs['Color'])
     # Read an image to serve as a normals map for the specular reflection
     normImage = tree.nodes.new('ShaderNodeTexImage')
     normImage.image = bpy.data.images.load(normal_map_path)
@@ -174,7 +175,9 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
                             texImage.outputs['Color'])
     # Add Mix shader node
     mix_shader = tree.nodes.new("ShaderNodeMixShader")
-    mix_shader.inputs[0].default_value = SHADER_MIX_RATIO
+    shader_mix_ratio = random.uniform(SHADER_MIX_RATIO_MIN,
+                                      SHADER_MIX_RATIO_MAX)
+    mix_shader.inputs[0].default_value = shader_mix_ratio
     tree.links.new(mix_shader.inputs[1], 
                             bsdf_glossy.outputs['BSDF'])
     tree.links.new(mix_shader.inputs[2], 
