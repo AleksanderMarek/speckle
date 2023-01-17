@@ -12,30 +12,45 @@ To do:
     -Finish commenting and clean the code
 """
 
-def blender_render_model(output_path, pattern_path): 
+def blender_render_model(output_path, pattern_path, normal_map_path): 
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    # Define constants
+    DIFFUSE_ROUGHNESS = 0.5
+    GLOSSY_ROUGHNESS = 0.2
+    SHADER_MIX_RATIO = 0.95
+    SPOT_DIST_MEAN = 0.5
+    SPOT_DIST_VARIATION = 0.2
+    SPOT_ANG_MEAN = 35
+    SPOT_ANG_VARIATION = 10
+    SPOT_ENERGY_MEAN = 60
+    SPOT_ENERGY_VARIATION = 25
+    SPOT_SIZE_MIN = 0.0
+    SPOT_SIZE_MAX = 0.01
+    FSTOP_MIN = 4.0
+    FSTOP_MAX = 16.0
+    SPEC_STR_MIN = 0.1
+    SPEC_STR_MAX = 1.0
     # Set the original cube
     bpy.ops.mesh.primitive_cube_add(size = 0.1, enter_editmode = False,
                                     align = 'WORLD', location = (0, 0.05, 0))
     cube = bpy.data.objects["Cube"]
     # Spotlight properties
     # Shape and energy
-    spot_variation = 5
-    spot_size = math.radians(10 + random.uniform(-1, 1)*spot_variation)
+    spot_size = math.radians(SPOT_ANG_MEAN \
+                             + random.uniform(-1, 1)*SPOT_ANG_VARIATION)
     spot_blend = random.uniform(0, 1)
-    spot_energy_variation = 20.0
-    spot_energy = random.uniform(0, spot_energy_variation)
-    shadow_spot_size = random.uniform(0.001, 0.05)
+    spot_energy = SPOT_ENERGY_MEAN \
+        +random.uniform(-1, 1)*SPOT_ENERGY_VARIATION
+    shadow_spot_size = random.uniform(SPOT_SIZE_MIN, SPOT_SIZE_MAX)
     # Position
     polar_ang_variation = 60
-    azim_ang_variation = 30
-    R_variation = 0.2
-    polar_ang = math.radians(-90 + random.uniform(-1, 1)*polar_ang_variation)
-    azim_ang = math.radians(30 + random.uniform(-1, 1)*azim_ang_variation)
-    R = 0.5 + random.uniform(-1, 1)*R_variation
-    x = R*math.cos(polar_ang)*math.sin(azim_ang)
-    y = R*math.sin(polar_ang)*math.sin(azim_ang)
-    z = R*math.cos(azim_ang)
+    azim_ang_variation = 30  
+    polar_ang = math.radians(-90 + random.uniform(-1, 1) * polar_ang_variation)
+    azim_ang = math.radians(90 + random.uniform(-1, 1) * azim_ang_variation)
+    spot_dist = SPOT_DIST_MEAN + random.uniform(-1, 1)*SPOT_DIST_VARIATION
+    x = spot_dist * math.cos(polar_ang) * math.sin(azim_ang)
+    y = spot_dist * math.sin(polar_ang) * math.sin(azim_ang)
+    z = spot_dist * math.cos(azim_ang)
     spot_loc = (x, y, z)
     target = (random.uniform(-0.05, 0.05),
               0,
@@ -80,7 +95,7 @@ def blender_render_model(output_path, pattern_path):
     # Create a new object to represent the light
     light1_ob = bpy.data.objects.new(name="Light", object_data=light1)
     # Link the light object to the scene
-    bpy.context.collection.objects.link(light1_ob)
+    #bpy.context.collection.objects.link(light1_ob)
     light1_ob.location = (-1, -1, 0)
     light1_ob.rotation_euler = (math.radians(89.5), 0, math.radians(-33.4))
     light_variation = 5.0
@@ -90,8 +105,7 @@ def blender_render_model(output_path, pattern_path):
 
     # Camera properties
     # Add camera location
-    fstop_variation = 30.0
-    fstop = random.uniform(5.0, fstop_variation)
+    fstop = random.uniform(FSTOP_MIN, FSTOP_MAX)
     focal_length = 50.0
     camera = bpy.data.objects.new("Camera", bpy.data.cameras.new("Camera"))
     bpy.context.collection.objects.link(camera)
@@ -104,58 +118,102 @@ def blender_render_model(output_path, pattern_path):
     cam1.sensor_width = 8.80
     cam1.sensor_height = 6.60
     cam1.dof.focus_object = bpy.data.objects["Cube"]
-
     
-
-    # Add materials to the cube
-    #im1 = bpy.ops.image.load("//..\\..\\..\\speckle\\images\\im4.tiff")
-    #mat = bpy.data.materials.new(name="New_Mat")
-    #mat.use_nodes = True
-    #bsdf = mat.node_tree.nodes["Principled BSDF"]
-    #texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
-    #texImage.image = bpy.data.images.load("D:\\Cool Projects\\Paperspace\\3-D Models\\Background.jpg")
-    #mat.node_tree.links.new(bsdf.inputs['Base Color'], texImage.outputs['Color'])
-    #ob = context.view_layer.objects.active
+    # Add cross camera
+    cross_angle = math.radians(20)
+    cross_dist = 1.0
+    camera2 = bpy.data.objects.new("Camera_off", 
+                                  bpy.data.cameras.new("Camera_off"))
+    bpy.context.collection.objects.link(camera2)
+    cam2 = bpy.data.cameras['Camera_off']
+    camera2.location = (cross_dist*math.sin(cross_angle), 
+                        -cross_dist*math.cos(cross_angle), 
+                        0.0)
+    camera2.rotation_euler = (math.pi/2, 0, math.sin(cross_angle))
+    cam2.dof.use_dof = True
+    cam2.dof.aperture_fstop = fstop
+    cam2.lens = focal_length
+    cam2.sensor_width = 8.80
+    cam2.sensor_height = 6.60
+    cam2.dof.focus_object = bpy.data.objects["Cube"]
+    
+    # Make a new material
     mat = bpy.data.materials.new(name="Material")
     mat.use_nodes = True
-    bsdf = mat.node_tree.nodes["Principled BSDF"]
-    bsdf.inputs[6].default_value = 0.8 # metallic
-    bsdf.inputs[7].default_value = 0.6 # specular
-    bsdf.inputs[9].default_value = 0.23 # roughness
-
-    texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
-    texImage = mat.node_tree.nodes["Image Texture"]
+    tree =  mat.node_tree
+    # Remove the default BSDF node
+    bsdf = tree.nodes["Principled BSDF"]
+    tree.nodes.remove(bsdf)
+    # Define specular node (Glossy BSDF)
+    bsdf_glossy = mat.node_tree.nodes.new("ShaderNodeBsdfGlossy")
+    bsdf_glossy.distribution = "MULTI_GGX"
+    bsdf_glossy.inputs[1].default_value = GLOSSY_ROUGHNESS
+    # Read an image to serve as a base texture for the specular reflection
+    texImage = tree.nodes.new('ShaderNodeTexImage')
     texImage.image = bpy.data.images.load(pattern_path)
-    mat.node_tree.links.new(bsdf.inputs['Base Color'], 
+    bpy.data.images[0].colorspace_settings.name = 'Non-Color'
+    #tree.links.new(bsdf_glossy.inputs['Color'], 
+    #                        texImage.outputs['Color'])
+    # Read an image to serve as a normals map for the specular reflection
+    normImage = tree.nodes.new('ShaderNodeTexImage')
+    normImage.image = bpy.data.images.load(normal_map_path)
+    bpy.data.images[0].colorspace_settings.name = 'Non-Color'
+    normMap = tree.nodes.new('ShaderNodeNormalMap')
+    specularStrength = random.uniform(SPEC_STR_MIN, SPEC_STR_MAX)
+    normMap.inputs[0].default_value = specularStrength
+    tree.links.new(normMap.inputs['Color'], 
+                            normImage.outputs['Color'])
+    tree.links.new(bsdf_glossy.inputs['Normal'], 
+                            normMap.outputs['Normal'])
+    # Add diffusive node (Diffuse BSDF)
+    bsdf_diffuse = tree.nodes.new("ShaderNodeBsdfDiffuse")
+    # Set roughness
+    bsdf_diffuse.inputs[1].default_value = DIFFUSE_ROUGHNESS
+    # Link the pattern image to the colour of the diffusive reflection
+    tree.links.new(bsdf_diffuse.inputs['Color'], 
                             texImage.outputs['Color'])
+    # Add Mix shader node
+    mix_shader = tree.nodes.new("ShaderNodeMixShader")
+    mix_shader.inputs[0].default_value = SHADER_MIX_RATIO
+    tree.links.new(mix_shader.inputs[1], 
+                            bsdf_glossy.outputs['BSDF'])
+    tree.links.new(mix_shader.inputs[2], 
+                            bsdf_diffuse.outputs['BSDF'])
+    # Link the Mix shader node with the Material output
+    mat_output = tree.nodes["Material Output"]
+    tree.links.new(mat_output.inputs['Surface'], 
+                            mix_shader.outputs['Shader'])
+    # Separate cube into faces for texture mapping
     ob = bpy.context.view_layer.objects.active
+    bpy.context.view_layer.objects.active
     # Assign the material to the cube
     cube.data.materials.append(mat)
     bpy.data.objects['Cube'].select_set(True)
     #bpy.ops.outliner.item_activate(deselect_all=True)
     bpy.ops.object.editmode_toggle()
-    bpy.ops.uv.cube_project(cube_size=20)
+    bpy.ops.uv.cube_project(scale_to_bounds=True)
 
 
 
     # Render image and save
-    bpy.context.scene.camera = camera
-    bpy.context.scene.render.filepath = output_path
-    bpy.context.scene.render.resolution_x = 2448
-    bpy.context.scene.render.resolution_y = 2048
-    bpy.context.scene.render.image_settings.file_format = 'TIFF'
-    bpy.context.scene.render.image_settings.color_mode = 'BW'
-    bpy.context.scene.render.image_settings.color_depth = '8'
-    bpy.context.scene.render.image_settings.compression = 0
-    bpy.context.scene.render.engine = 'CYCLES' #Working
-    bpy.context.scene.cycles.device = 'GPU'
-    bpy.context.scene.cycles.samples = 300
-    bpy.context.scene.cycles.use_denoising = True
-    bpy.context.scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
-    bpy.context.scene.render.use_border = True
+    scene = bpy.context.scene
+    scene.camera = camera
+    scene.render.filepath = output_path
+    scene.render.resolution_x = 2448
+    scene.render.resolution_y = 2048
+    scene.render.image_settings.file_format = 'TIFF'
+    scene.render.image_settings.color_mode = 'BW'
+    scene.render.image_settings.color_depth = '8'
+    scene.render.image_settings.compression = 0
+    scene.render.engine = 'CYCLES' #Working
+    scene.cycles.device = 'GPU'
+    scene.cycles.samples = 100
+    scene.cycles.use_denoising = True
+    scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
+    scene.render.use_border = True
     bpy.ops.render.render(write_still=True)    
-    #bpy.ops.wm.save_as_mainfile(
-    #    filepath=r"E:\GitHub\speckle\development\blender\test1.blend")
+    bpy.ops.wm.save_as_mainfile(
+        filepath=r"D:\Experiment Quality\test\test1.blend")
 
 
 """    
