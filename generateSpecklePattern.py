@@ -43,7 +43,7 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 10
+n_speckles = 1
 grad_path = r'D:\Experiment Quality\speckle_images\grad.tiff'
 
 # Define properties of the render
@@ -84,11 +84,11 @@ for ii in range(n_speckles):
         speckle.blender_render_model(render_path, raw_speckle_path, grad_path)
         output_paths = speckle.trim_render_im(render_path, output_folder)
         for kk in range(len(output_paths)):
-            noise_floor, mean_U = \
+            noise_floor, mean_U, std_U = \
                 speckle.image_deformation(output_paths[kk], 
                                           imDef_inp, corr_inp)
             record = [raw_speckle_path, render_path, 
-                      output_paths[kk], noise_floor, mean_U]    
+                      output_paths[kk], noise_floor, mean_U, std_U]    
             with open(summary_path, 'a', newline='') as fd:
                 writer = csv.writer(fd)
                 writer.writerow(record)
