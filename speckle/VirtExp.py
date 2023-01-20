@@ -20,14 +20,14 @@ import mathutils
 
 class VirtExp:
     # Constructor
-    def __init__(self, pattern_path, normals_map, output_path=None,
-                 model_path=None):
+    def __init__(self, pattern_path, normal_map_path, output_path=None,
+                 model_path=None, objects_position='fixed'):
         # Properties of the scene
         self.pattern_path = pattern_path
-        self.normal_map_path = normals_map
+        self.normal_map_path = normal_map_path
         self.output_path = output_path
         self.model_path = model_path        
-        self.def_position = 'fixed'
+        self.objects_position = objects_position
         self.objects = list()
         self.lights = list()
         self.cameras = list()
@@ -38,50 +38,37 @@ class VirtExp:
         
     # Create the default scene
     def create_def_scene(self):
-        # Define the constant parameters
-        # TARGET
-        TARGET_SIZE = (0.1, 0.1, 0.0015)
-        # LIGHTS
-        LIGHT_TYPE = "SPOT"
-        LIGHT_POS = (-0.5, 0.3, 0.5)
-        LIGHT_TARGET = np.array([0.0, 0.0, 0.0])
-        LIGHT_INIT_ROT = np.array([0.0, 0.0, -1.0])
-        LIGHT_ENERGY = 10.0
-        LIGHT_SPOTSIZE = math.radians(25)
-        LIGHT_SPOT_BLEND = 1.0
-        LIGHT_SHAD_SPOT = 0.1
-        CAM0_POS = (0.0, 0.0, 1.0)
-        CAM1_POS = (0.259, 0.0, 0.966)
-        CAM_TARGET = np.array([0.0, 0.0, 0.0])
-        CAM_FOC_LENGTH = 50.0
-        CAM_FSTOP = 8
-        CAM_INIT_ROT = np.array([0.0, 0.0, -1.0])
+        # Get default properties
+        p = self.get_default_params()
         # CAMERAS
         # Add the default target
-        target = self.add_cube(TARGET_SIZE)
+        target = self.add_cube(p["target_size"])
         # Add the light panel
         # Calculate desired orientation of the light
-        light_target_orient = LIGHT_TARGET - np.array(LIGHT_POS)
+        light_target_orient = p["light_target"] - np.array(p["light_pos"])
         # Calculate the rotation angle of the light
-        light_angle = self.calc_rot_angle(LIGHT_INIT_ROT, light_target_orient)
-        self.add_light(LIGHT_TYPE, pos=LIGHT_POS, orient=light_angle,
-                       energy=LIGHT_ENERGY, spot_size=LIGHT_SPOTSIZE,
-                       spot_blend=LIGHT_SPOT_BLEND, 
-                       shadow_spot_size = LIGHT_SHAD_SPOT)
+        light_angle = self.calc_rot_angle(p["light_init_rot"], 
+                                          light_target_orient)
+        self.add_light(p["light_type"], pos=p["light_pos"], orient=light_angle,
+                       energy=p["light_energy"], spot_size=p["light_spotsize"],
+                       spot_blend=p["light_spot_blend"], 
+                       shadow_spot_size = p["light_shad_spot"])
         # Add straight camera
         # Calculate desired orientation of the cam
-        cam0_target_orient = CAM_TARGET - np.array(CAM0_POS) 
+        cam0_target_orient = p["cam0_target"] - np.array(p["cam0_pos"]) 
         cam0_target_dist = np.linalg.norm(cam0_target_orient)+1e-16
-        cam_angle = self.calc_rot_angle(CAM_INIT_ROT, cam0_target_orient)
-        cam0 = self.add_camera(pos=CAM0_POS, orient=cam_angle, fstop=CAM_FSTOP,
-                               focal_length=CAM_FOC_LENGTH,
+        cam_angle = self.calc_rot_angle(p["cam_init_rot"], cam0_target_orient)
+        cam0 = self.add_camera(pos=p["cam0_pos"], orient=cam_angle, 
+                               fstop=p["cam_fstop"], 
+                               focal_length=p["cam_foc_length"],
                                obj_distance=cam0_target_dist)  
         # Add cross camera
-        cam1_target_orient = CAM_TARGET - np.array(CAM1_POS)
+        cam1_target_orient = p["cam1_target"] - np.array(p["cam1_pos"])
         cam1_target_dist = np.linalg.norm(cam1_target_orient)+1e-16
-        cam_angle = self.calc_rot_angle(CAM_INIT_ROT, cam1_target_orient)
-        cam1 = self.add_camera(pos=CAM1_POS, orient=cam_angle, fstop=CAM_FSTOP,
-                               focal_length=CAM_FOC_LENGTH,
+        cam_angle = self.calc_rot_angle(p["cam_init_rot"], cam1_target_orient)
+        cam1 = self.add_camera(pos=p["cam1_pos"], orient=cam_angle, 
+                               fstop=p["cam_fstop"],
+                               focal_length=p["cam_foc_length"],
                                obj_distance=cam1_target_dist)         
         # Define the material and assign it to the cube
         self.add_material(target)
@@ -268,15 +255,110 @@ class VirtExp:
     def save_model(self):
         if self.model_path is not None:
             bpy.ops.wm.save_as_mainfile(filepath=self.model_path)
-      
+            
+    # Get properties for the default scene
+    def get_default_params(self):
+        # Define the dictionary
+        props = {}
+        # Define constant parameters
+        props["target_size"] = (0.1, 0.1, 0.0015)
+        props["light_type"] = "SPOT"
+        props["light_init_rot"] = np.array([0.0, 0.0, -1.0])
+        props["cam_foc_length"] = 50.0
+        props["cam_init_rot"] = np.array([0.0, 0.0, -1.0])
+        props["cam0_pos"] = (0.0, 0.0, 1.0)
+        props["cam0_target"] = np.array([0.0, 0.0, 0.0])
+        # Define parameters that are allowed to change
+        # Constant
+        if self.objects_position == 'fixed':
+            props["light_pos"] = (-0.5, 0.3, 0.5)
+            props["light_target"] = np.array([0.0, 0.0, 0.0])
+            props["light_energy"] = 10.0
+            props["light_spotsize"] = math.radians(25)
+            props["light_spot_blend"] = 1.0
+            props["light_shad_spot"] = 0.1
+            props["cam1_pos"] = (0.259, 0.0, 0.966)
+            props["cam1_target"] = np.array([0.0, 0.0, 0.0])
+            props["cam_fstop"] = 8.0
+            props["cam1_target"] = np.array([0.0, 0.0, 0.0])
+        # Random    
+        elif self.objects_position == 'random':
+            # Control parameters
+            polar_ang_variation = 60
+            azim_ang_variation = 30 
+            spot_dist_mean = 0.5
+            spot_dist_variation = 0.2
+            target_range = 0.075
+            spot_energy_mean = 20.0
+            spot_energy_variation = 10.0
+            spot_ang_mean = 35.0
+            spot_ang_variation = 10.0
+            spot_size_min = 0.0
+            spot_size_max = 0.01
+            cam1_dist_mean = 1.0
+            cam1_dist_variation = 0.005
+            cam1_ang_mean = 15.0
+            cam1_ang_variation = 5.0
+            cam1_target_variation = 0.03
+            fstop_min = 4.0
+            fstop_max = 11.0
+            # Position of the spotlight
+            polar_ang = math.radians(
+                random.uniform(-1, 1) * polar_ang_variation)
+            azim_ang = math.radians(
+                random.uniform(-1, 1) * azim_ang_variation)
+            spot_dist = spot_dist_mean \
+                + random.uniform(-1, 1) * spot_dist_variation
+            x = spot_dist * math.cos(polar_ang) * math.sin(azim_ang)
+            y = spot_dist * math.sin(polar_ang) * math.sin(azim_ang)
+            z = spot_dist * math.cos(azim_ang)
+            props["light_pos"] = (x, y, z)
+            # Light target
+            props["light_target"] = (
+                random.uniform(-target_range, target_range),
+                0,
+                random.uniform(-target_range, target_range)
+                )
+            # Light energy
+            props["light_energy"] = random.normalvariate(spot_energy_mean,
+                                                      spot_energy_variation)
+            # Spot size
+            props["light_spotsize"] = math.radians(
+                spot_ang_mean + random.uniform(-1, 1) * spot_ang_variation)
+            # Spot blend
+            props["light_spot_blend"] = random.uniform(0.0, 1.0)
+            # Light shadow spot
+            props["light_shad_spot"] = random.uniform(spot_size_min,
+                                                      spot_size_max)
+            # Position of cross camera
+            cam1_dist = random.normalvariate(cam1_dist_mean, 
+                                          cam1_dist_variation)
+            cam1_ang = math.radians(
+                random.normalvariate(cam1_ang_mean, cam1_ang_variation)
+                )
+            props["cam1_pos"] = (
+                cam1_dist*math.sin(cam1_ang),
+                0.0,
+                cam1_dist*math.cos(cam1_ang))
+            # Cross camera target
+            props["cam1_target"] = (
+                random.normalvariate(0.0, cam1_target_variation),
+                random.normalvariate(0.0, cam1_target_variation),
+                0.0)
+            # Aperture
+            props["cam_fstop"] = random.uniform(fstop_min, fstop_max)
+        return props
+            
+
 pattern_path = r"E:\speckle\test\im.tiff"
 normals_path = r"E:\speckle\test\grad.tiff"
 model_path = r"E:\speckle\test\model_dev.blend"
 output_path = r"E:\speckle\test\render_0.tiff"
-output_path2 = r"E:\speckle\test\render_0.tiff"
+output_path2 = r"E:\speckle\test\render_1.tiff"
 
-a = VirtExp(pattern_path, normals_path, output_path, model_path)
+a = VirtExp(pattern_path, normals_path, output_path, model_path,
+            objects_position="random")
 a.create_def_scene()  
 a.render_scene()
-#a.set_renderer(a.cameras[1])
-#a.render_scene(output_path2)    
+a.set_renderer(a.cameras[1])
+a.render_scene(output_path2)    
