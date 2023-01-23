@@ -10,20 +10,23 @@ model that is developed and adds them to a separate folder
 For now hard coded for the initial input images from blender
 """
 
-def trim_render_im(im_input_path, output_folder, window_size = 500):
+def trim_render_im(im_input_path, output_folder, render_size, window_size=500,
+                   step_size=1):
     im_root = 'im'
     im_input = Image.open(im_input_path)
     im_input = np.asarray(im_input)
     # Loop over 4 subimages and save each separately
-    crop_start_X = math.floor(im_input.shape[1]/2-window_size)
-    crop_start_Y = math.floor(im_input.shape[0]/2-window_size)
+    crop_start_X = math.floor(im_input.shape[1]/2-render_size/2)
+    crop_start_Y = math.floor(im_input.shape[0]/2-render_size/2)
+    n_windows_x = math.floor(render_size/window_size)
+    n_windows_y = math.floor(render_size/window_size)
     im_list = []
-    for i in range(2):
-        for j in range(2):
+    for i in range(0, n_windows_x, step_size):
+        for j in range(0, n_windows_y, step_size):
             im_cropped = \
                 im_input[
-                crop_start_Y+window_size*j:crop_start_Y+window_size*(j+1),
-                crop_start_X+window_size*i:crop_start_X+window_size*(i+1)]
+                crop_start_Y + window_size*j:crop_start_Y + window_size*(j+1),
+                crop_start_X + window_size*i:crop_start_X + window_size*(i+1)]
             im = Image.fromarray(im_cropped, mode='L')
             path = generate_output_name(output_folder, im_root)
             im.save(path)        
