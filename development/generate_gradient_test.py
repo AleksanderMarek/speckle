@@ -11,9 +11,9 @@ speckle_size = 4;
 fft_threshold = 4
 output_DPI = 600
 normal_filter = 5
-output_path = r"D:\Experiment Quality\test\im.tiff"
-grad_path = r"D:\Experiment Quality\test\grad.tiff"
-render_path = r"D:\Experiment Quality\test\render1.tiff"
+output_path = r"E:\speckle\test\im.tiff"
+grad_path = r"E:\speckle\test\grad.tiff"
+render_path = r"E:\speckle\test\render1.tiff"
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat2 = speckle.SpeckleImage(image_size, 60, normal_map_filter=normal_filter)
 im1 = pat1.gen_pattern()
