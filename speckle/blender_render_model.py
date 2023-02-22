@@ -219,7 +219,7 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     scene.render.use_border = True
     bpy.ops.render.render(write_still=True)    
     bpy.ops.wm.save_as_mainfile(
-        filepath=r"D:\Experiment Quality\test\test1.blend")
+        filepath=r"E:\speckle\test\test1.blend")
 
 
 """    
