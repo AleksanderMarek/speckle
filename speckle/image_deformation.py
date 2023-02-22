@@ -25,7 +25,8 @@ def image_deformation(im_path, imdef_inp, corr_inp):
     f'\"{corr_inp}\"\"'
     os.system(shell_cmd)
     # Import the results
-    target_U = 0.382;
+    #target_U = 0.382;
+    target_U = 0.0702
     results_path = r"D:\Experiment Quality\ImDef\u\im_deformed_1_0.def_u.csv"
     results = genfromtxt(results_path, delimiter=',')
     if len(results.shape) == 2:

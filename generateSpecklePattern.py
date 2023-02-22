@@ -3,6 +3,7 @@ import random
 import csv 
 import numpy as np
 import glob
+import math
 
 """ This script generates training images for qe-net. First a synthetic
 speckle pattern is generated using a FFT-based algorithm. Then, the pattern
@@ -41,8 +42,10 @@ grad_path = r'D:\Experiment Quality\speckle_images\grad.tiff'
 render_folder = r"D:\Experiment Quality\rendered_images"
 render_prefix = 'render'
 n_renders = 5
+render_size = math.floor(target_size[0]/(pixel_size))*0.95
 
 # Define properties of training images
+output_size = 100
 output_folder = 'D:\Experiment Quality\input_images'
 
 # Define paths to MatchID input files
@@ -72,7 +75,10 @@ for ii in range(n_speckles):
         render_path = speckle.generate_output_name(
             render_folder, render_prefix)
         speckle.blender_render_model(render_path, raw_speckle_path, grad_path)
-        output_paths = speckle.trim_render_im(render_path, output_folder)
+        output_paths = speckle.trim_render_im(render_path, output_folder,
+                                              render_size,
+                                              window_size=output_size,
+                                              step_size=4)
         for kk in range(len(output_paths)):
             noise_floor, mean_U, std_U = \
                 speckle.image_deformation(output_paths[kk], 

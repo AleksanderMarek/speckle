@@ -118,9 +118,10 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     cam1.dof.use_dof = True
     cam1.dof.aperture_fstop = fstop
     cam1.lens = focal_length
-    cam1.sensor_width = 8.80
-    cam1.sensor_height = 6.60
-    cam1.dof.focus_object = bpy.data.objects["Cube"]
+    cam1.sensor_width = 8.46
+    cam1.sensor_height = 7.09
+    # cam1.dof.focus_object = bpy.data.objects["Cube"]
+    cam1.dof.focus_distance = 1.0
     
     # Add cross camera
     cross_angle = math.radians(20)
@@ -132,13 +133,13 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     camera2.location = (cross_dist*math.sin(cross_angle), 
                         -cross_dist*math.cos(cross_angle), 
                         0.0)
-    camera2.rotation_euler = (math.pi/2, 0, math.sin(cross_angle))
+    camera2.rotation_euler = (math.pi/2, 0, cross_angle)
     cam2.dof.use_dof = True
     cam2.dof.aperture_fstop = fstop
     cam2.lens = focal_length
-    cam2.sensor_width = 8.80
-    cam2.sensor_height = 6.60
-    cam2.dof.focus_object = bpy.data.objects["Cube"]
+    cam2.sensor_width = 8.46
+    cam2.sensor_height = 7.09
+    cam2.dof.focus_distance = 1.0
     
     # Make a new material
     mat = bpy.data.materials.new(name="Material")
@@ -204,8 +205,8 @@ def blender_render_model(output_path, pattern_path, normal_map_path):
     scene = bpy.context.scene
     scene.camera = camera
     scene.render.filepath = output_path
-    scene.render.resolution_x = 2448
-    scene.render.resolution_y = 2048
+    scene.render.resolution_x = 2452
+    scene.render.resolution_y = 2056
     scene.render.image_settings.file_format = 'TIFF'
     scene.render.image_settings.color_mode = 'BW'
     scene.render.image_settings.color_depth = '8'
