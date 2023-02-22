@@ -153,26 +153,31 @@ class VirtExp:
         tree.nodes.remove(bsdf)
         # Define specular node (Glossy BSDF)
         bsdf_glossy = mat.node_tree.nodes.new("ShaderNodeBsdfGlossy")
+        bsdf_glossy.location = (-250, 408)
         bsdf_glossy.distribution = "MULTI_GGX"
         bsdf_glossy.inputs[1].default_value = glossy_roughness
         # Read an image to serve as a base texture for the specular reflection
         texImage = tree.nodes.new('ShaderNodeTexImage')
+        texImage.location = (-825, 63)
         texImage.image = bpy.data.images.load(self.pattern_path)
         bpy.data.images[0].colorspace_settings.name = 'Non-Color'
         tree.links.new(bsdf_glossy.inputs['Color'], 
                                 texImage.outputs['Color'])
         # Read an image to serve as a normals map for the specular reflection
-        normImage = tree.nodes.new('ShaderNodeTexImage')
-        normImage.image = bpy.data.images.load(self.normal_map_path)
+        norm_image = tree.nodes.new('ShaderNodeTexImage')
+        norm_image.location = (-825, 373)
+        norm_image.image = bpy.data.images.load(self.normal_map_path)
         bpy.data.images[0].colorspace_settings.name = 'Non-Color'
-        normMap = tree.nodes.new('ShaderNodeNormalMap')
-        normMap.inputs[0].default_value = specular_strength
-        tree.links.new(normMap.inputs['Color'], 
-                                normImage.outputs['Color'])
+        norm_map = tree.nodes.new('ShaderNodeNormalMap')
+        norm_map.location = (-525, 425)
+        norm_map.inputs[0].default_value = specular_strength
+        tree.links.new(norm_map.inputs['Color'], 
+                                norm_image.outputs['Color'])
         tree.links.new(bsdf_glossy.inputs['Normal'], 
-                                normMap.outputs['Normal'])
+                                norm_map.outputs['Normal'])
         # Add diffusive node (Diffuse BSDF)
         bsdf_diffuse = tree.nodes.new("ShaderNodeBsdfDiffuse")
+        bsdf_diffuse.location = (-424, 21)
         # Set roughness
         bsdf_diffuse.inputs[1].default_value = diffuse_roughness
         # Link the pattern image to the colour of the diffusive reflection
@@ -180,6 +185,7 @@ class VirtExp:
                                 texImage.outputs['Color'])
         # Add Mix shader node
         mix_shader = tree.nodes.new("ShaderNodeMixShader")
+        mix_shader.location = (42, 340)
         mix_shader.inputs[0].default_value = shader_mix_ratio
         tree.links.new(mix_shader.inputs[1], 
                                 bsdf_glossy.outputs['BSDF'])
@@ -187,6 +193,7 @@ class VirtExp:
                                 bsdf_diffuse.outputs['BSDF'])
         # Link the Mix shader node with the Material output
         mat_output = tree.nodes["Material Output"]
+        mat_output.location = (250, 340)
         tree.links.new(mat_output.inputs['Surface'], 
                                 mix_shader.outputs['Shader'])
         # Separate cube into faces for texture mapping
@@ -273,7 +280,7 @@ class VirtExp:
         if self.objects_position == 'fixed':
             props["light_pos"] = (-0.5, 0.3, 0.5)
             props["light_target"] = np.array([0.0, 0.0, 0.0])
-            props["light_energy"] = 10.0
+            props["light_energy"] = 20.0
             props["light_spotsize"] = math.radians(25)
             props["light_spot_blend"] = 1.0
             props["light_shad_spot"] = 0.1
@@ -348,17 +355,4 @@ class VirtExp:
             # Aperture
             props["cam_fstop"] = random.uniform(fstop_min, fstop_max)
         return props
-            
-
-pattern_path = r"E:\speckle\test\im.tiff"
-normals_path = r"E:\speckle\test\grad.tiff"
-model_path = r"E:\speckle\test\model_dev.blend"
-output_path = r"E:\speckle\test\render_0.tiff"
-output_path2 = r"E:\speckle\test\render_1.tiff"
-
-a = VirtExp(pattern_path, normals_path, output_path, model_path,
-            objects_position="random")
-a.create_def_scene()  
-a.render_scene()
-a.set_renderer(a.cameras[1])
-a.render_scene(output_path2)    
+               
