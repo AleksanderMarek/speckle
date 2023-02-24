@@ -142,7 +142,7 @@ class VirtExp:
     
     # Method to define a new material and add it to the selected object
     def add_material(self, target, 
-                     glossy_roughness=0.2, specular_strength=0.5, 
+                     glossy_roughness=0.2, specular_strength=1.0, 
                      diffuse_roughness=0.2, shader_mix_ratio=0.7):
         # Make a new material
         mat = bpy.data.materials.new(name="Material")
@@ -171,6 +171,7 @@ class VirtExp:
         norm_map = tree.nodes.new('ShaderNodeNormalMap')
         norm_map.location = (-525, 425)
         norm_map.inputs[0].default_value = specular_strength
+        norm_map.uv_map = "UVMap"
         tree.links.new(norm_map.inputs['Color'], 
                                 norm_image.outputs['Color'])
         tree.links.new(bsdf_glossy.inputs['Normal'], 
@@ -282,8 +283,8 @@ class VirtExp:
             props["light_target"] = np.array([0.0, 0.0, 0.0])
             props["light_energy"] = 20.0
             props["light_spotsize"] = math.radians(25)
-            props["light_spot_blend"] = 1.0
-            props["light_shad_spot"] = 0.1
+            props["light_spot_blend"] = 0.5
+            props["light_shad_spot"] = 0.01
             props["cam1_pos"] = (0.259, 0.0, 0.966)
             props["cam1_target"] = np.array([0.0, 0.0, 0.0])
             props["cam_fstop"] = 8.0

@@ -121,7 +121,7 @@ class SpeckleImage:
         self.gradient = np.hypot(sx,sy)
         self.gradient = (np.where(self.gradient > 128,
                                 self.binarised_high, 
-                                self.binarised_low)*255).astype('uint8')
+                                self.binarised_low)*1).astype('uint8')
         
     # Save gradient image
     def grad_save(self, path):
@@ -132,16 +132,16 @@ class SpeckleImage:
     def generate_norm_map(self, binary_map=None):
         # TODO: Add a possibility of relating the normals map to the 
         # gradient of a speckle pattern
+        if binary_map is None:
+            binary_map = self.pattern[:, :]
         mat_one = np.ones((self.pattern.shape[0], self.pattern.shape[1], 1))
         # R channel
         mean_mat = mat_one * 127
-        std_mat = mat_one * 30 \
-            + np.multiply(mat_one, self.pattern[:, :, None])*30
+        std_mat = 30*np.multiply(mat_one, binary_map[:, :, None]) 
         R = np.random.normal(mean_mat, std_mat).astype('uint8')    
         # G channel    
         mean_mat = mat_one * 127
-        std_mat = mat_one * 30 \
-            + np.multiply(mat_one, self.pattern[:, :, None])*30
+        std_mat = 30*np.multiply(mat_one, binary_map[:, :, None]) 
         G = np.random.normal(mean_mat, std_mat).astype('uint8')    
         # B channel
         B = np.random.uniform(0, 255, mat_one.shape).astype('uint8')     

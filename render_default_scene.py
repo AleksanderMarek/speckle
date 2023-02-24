@@ -28,12 +28,13 @@ output_DPI = 600
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
 im1 = pat1.gen_pattern()
+pat1.pattern_gradient()
 pat1.im_save(pattern_path)
 # Generate normals map
-normals_map = speckle.SpeckleImage(pat1.image_size, 60, normal_map_filter=5)
+normals_map = speckle.SpeckleImage(pat1.image_size, 60, normal_map_filter=1)
 normals_map.gen_pattern()
 normals_map.pattern_gradient()
-normals_map.generate_norm_map()
+normals_map.generate_norm_map(binary_map=pat1.gradient)
 normals_map.grad_save(normals_path)
 # Generate blender scene
 a = VirtExp(pattern_path, normals_path, output_path, model_path,
