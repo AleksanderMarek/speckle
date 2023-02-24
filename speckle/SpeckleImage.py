@@ -129,7 +129,9 @@ class SpeckleImage:
         im.save(path)
     
     # Generate normals map based on the gradient pattern    
-    def generate_norm_map(self):
+    def generate_norm_map(self, binary_map=None):
+        # TODO: Add a possibility of relating the normals map to the 
+        # gradient of a speckle pattern
         mat_one = np.ones((self.pattern.shape[0], self.pattern.shape[1], 1))
         # R channel
         mean_mat = mat_one * 127
