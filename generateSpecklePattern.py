@@ -35,7 +35,7 @@ pixel_size_physical = 0.00345 # mm
 pixel_size = pixel_size_physical/M
 raw_speckle_folder = r'D:\Experiment Quality\speckle_images'
 raw_speckle_prefix = 'pattern'
-n_speckles = 40
+n_speckles = 80
 grad_path = r'D:\Experiment Quality\speckle_images\grad.tiff'
 
 # Define properties of the render
