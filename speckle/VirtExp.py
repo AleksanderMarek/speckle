@@ -285,8 +285,12 @@ class VirtExp:
             props["light_spotsize"] = math.radians(25)
             props["light_spot_blend"] = 0.5
             props["light_shad_spot"] = 0.01
-            props["cam1_pos"] = (0.259, 0.0, 0.966)
-            props["cam1_target"] = np.array([0.0, 0.0, 0.0])
+            cam1_ang = math.radians(15.0)
+            cam1_dist = 1.0
+            props["cam1_pos"] = (
+                cam1_dist*math.sin(cam1_ang),
+                0.0,
+                cam1_dist*math.cos(cam1_ang))
             props["cam_fstop"] = 8.0
             props["cam1_target"] = np.array([0.0, 0.0, 0.0])
         # Random    
