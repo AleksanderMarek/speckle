@@ -15,11 +15,12 @@ model_path = r"D:\Experiment Quality\blender_model\model_dev.blend"
 output_path = r"D:\Experiment Quality\blender_model\render_0_0.tiff"
 output_path2 = r"D:\Experiment Quality\blender_model\render_0_1.tiff"
 mesh_path = r"D:\GitHub\speckle\test_specimen\fullSpec.mesh"
-displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec2.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec3.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec4.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec5.csv"]
+# displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
+#                   r"D:\GitHub\speckle\test_specimen\fullSpec2.csv",
+#                   r"D:\GitHub\speckle\test_specimen\fullSpec3.csv",
+#                   r"D:\GitHub\speckle\test_specimen\fullSpec4.csv",
+#                   r"D:\GitHub\speckle\test_specimen\fullSpec5.csv"]
+displ_filepath = []
 
 
 
@@ -58,7 +59,7 @@ a = VirtExp(pattern_path, normals_path, output_path, model_path,
 p = a.get_default_params()
 # CAMERAS
 # Add the default target
-target = a.add_CAD_part(mesh_path)
+target = a.add_FEA_part(mesh_path)
 # Add the light panel
 # Calculate desired orientation of the light
 light_target_orient = p["light_target"] - np.array(p["light_pos"])
@@ -77,7 +78,8 @@ cam_angle = a.calc_rot_angle(p["cam_init_rot"], cam0_target_orient)
 cam0 = a.add_camera(pos=p["cam0_pos"], orient=cam_angle, 
                        fstop=p["cam_fstop"], 
                        focal_length=p["cam_foc_length"],
-                       obj_distance=cam0_target_dist)  
+                       obj_distance=cam0_target_dist,
+                       k1=0.05, p1=0.0)  
 # Add cross camera
 cam1_target_orient = p["cam1_target"] - np.array(p["cam1_pos"])
 cam1_target_dist = np.linalg.norm(cam1_target_orient)+1e-16
@@ -89,18 +91,22 @@ cam1 = a.add_camera(pos=p["cam1_pos"], orient=cam_angle,
 # Define the material and assign it to the cube
 a.add_material(target)
 # Set the renderer up and render image
-a.set_renderer(cam0, n_samples=500)
+a.set_renderer(cam0, n_samples=50)
+# Add distortion to the model
+a.add_image_distortion(cam0)
 # Save the model
 a.save_model()
 # Render the scene with the perpendicular camera
 a.render_scene(output_path)
 # Switch the camera to the cross one and render the scene
-a.set_renderer(cam1, n_samples=500)
+a.set_renderer(cam1, n_samples=50)
+# Add distortion to the model
+a.add_image_distortion(cam1)
 a.render_scene(output_path2) 
 
 # Deform images
 for i, displ_file in enumerate(displ_filepath):
-    a.deform_CAD_part(target, displ_file)
+    a.deform_FEA_part(target, displ_file)
     # Render the scene with the perpendicular camera
     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
     a.set_renderer(cam0, n_samples=500)

@@ -116,8 +116,9 @@ class VirtExp:
         
     # Method to add a camera to the scene
     def add_camera(self, pos=(0, 0, 0), orient=(0, 0, 0), obj_distance=None, 
-                   fstop=0, focal_length=50.0, sensor_size=(8.8, 6.6),
-                   sensor_px=(2448, 2048)):    
+                   fstop=0, focal_length=50.0, sensor_size=(8.4594, 7.0656),
+                   sensor_px=(2452, 2048), k1=0.0, k2=0.0, k3=0.0,
+                   p1=0.0, p2=0.0, p3=0.0, c0=None, c1=None):    
         # Create new data and object for the camera
         cam1 = bpy.data.cameras.new("Camera")
         camera = bpy.data.objects.new("Camera", cam1)
@@ -134,8 +135,19 @@ class VirtExp:
             cam1.dof.focus_distance = obj_distance  
             cam1.dof.use_dof = True
             cam1.dof.aperture_fstop = fstop
-        # Add custom field and store number of pixels    
+        # Add custom fields and store number of pixels
+        # Sensor size
         camera["sensor_px"] = sensor_px
+        #Cemera intrinsics
+        camera["k1"] = k1
+        camera["k2"] = k2
+        camera["k3"] = k3
+        camera["p1"] = p1
+        camera["p2"] = p2
+        if c0 is None:
+            camera["c0"] = sensor_px[0]/2
+        if c1 is None:
+            camera["c1"] = sensor_px[1]/2
         # Append to the camera list 
         self.cameras.append(camera)
         return camera
@@ -240,6 +252,7 @@ class VirtExp:
         scene.cycles.use_denoising = True
         scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
         scene.render.use_border = True
+        scene.render.use_compositing = False
         
     # Method to calculate rotation between two 3D vectors using Euler angles
     def calc_rot_angle(self, dir1, dir2):
@@ -376,7 +389,7 @@ class VirtExp:
     # This method imports a *.mesh file that contains information about FE
     # nodes and elements to generate a part in blender. The mesh is then
     # extruded to give some thickness to the part          
-    def add_CAD_part(self, part_filepath, thickness=0.002):
+    def add_FEA_part(self, part_filepath, thickness=0.002):
         # Read the mesh file
         with open(part_filepath, 'r') as file:
             lines = file.readlines()
@@ -413,7 +426,7 @@ class VirtExp:
     
     # This method updates the position of nodes defining the geometry of the
     # FE mesh, allowing to produce images of deformed specimen according to FEM
-    def deform_CAD_part(self, part, displ_filepath):
+    def deform_FEA_part(self, part, displ_filepath):
         with open(displ_filepath, 'r') as file:
             lines = file.readlines()
             # Detect where nodes and elements begin
@@ -426,4 +439,48 @@ class VirtExp:
         # Update the coordinates
         mesh = part.data
         for i in range(len(mesh.vertices)):
-            mesh.vertices[i].co = nodes[i]                  
+            mesh.vertices[i].co = nodes[i]        
+            
+    # This method adds optical distortions to the rendered image
+    def add_image_distortion(self, cam):
+        # Define distortion model
+        # If no movieclip (needed for distortion model) is present, load a file
+        if len(bpy.data.movieclips) == 0:
+            bpy.ops.clip.open(files=[{"name": self.pattern_path}])
+        clip = bpy.data.movieclips[0].tracking.camera
+        clip.sensor_width = cam.data.sensor_width
+        clip.focal_length = cam.data.lens
+        clip.distortion_model = 'BROWN'
+        clip.brown_k1 = cam["k1"]
+        clip.brown_k2 = cam["k2"]
+        clip.brown_k3 = cam["k3"]
+        clip.brown_p1 = cam["p1"]
+        clip.brown_p2 = cam["p2"]
+        clip.principal[0] = cam["c0"]
+        clip.principal[1] = cam["c1"]
+        # Build up compositing workflow
+        scene = bpy.context.scene
+        scene.use_nodes = True
+        tree = scene.node_tree
+        # Pull the original nodes
+        composite_node = tree.nodes["Composite"]
+        render_layers_node = tree.nodes["Render Layers"]
+        # Remove the original link
+        comp_link = composite_node.inputs[0].links[0]
+        tree.links.remove(comp_link)
+        # Add distortion node
+        distortion_node = tree.nodes.new(type="CompositorNodeMovieDistortion")
+        distortion_node.clip = bpy.data.movieclips[0]
+        distortion_node.distortion_type = 'DISTORT'
+        # Add links
+        tree.links.new(distortion_node.inputs[0], 
+                       render_layers_node.outputs[0])
+        tree.links.new(distortion_node.outputs[0],
+                       composite_node.inputs[0])
+        # Enable compositing
+        scene.render.use_compositing = True
+
+
+
+
+        
