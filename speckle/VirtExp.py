@@ -160,6 +160,7 @@ class VirtExp:
         texImage = tree.nodes.new('ShaderNodeTexImage')
         texImage.location = (-825, 63)
         texImage.image = bpy.data.images.load(self.pattern_path)
+        speckle_im = bpy.data.images[0]
         bpy.data.images[0].colorspace_settings.name = 'Non-Color'
         tree.links.new(bsdf_glossy.inputs['Color'], 
                                 texImage.outputs['Color'])
@@ -203,16 +204,27 @@ class VirtExp:
         # Assign the material to the cube
         target.data.materials.append(mat)
         target.select_set(True)
-        #bpy.ops.outliner.item_activate(deselect_all=True)
+        # Enter edit mode
         bpy.ops.object.editmode_toggle()
-        bpy.ops.uv.cube_project(scale_to_bounds=False)
+        # Project the mesh into a cube such that the specimen dimensions
+        # fit the encoded physical speckles
+        
+        # Find the size of the cube to project to as 0.5*max_size / DPI
+        im_max_px = max(texImage.image.size)
+        im_max_dim = [i for i, val in enumerate(texImage.image.size) \
+                      if val == im_max_px]
+        im_reso = texImage.image.resolution[im_max_dim[0]]
+        speckle_scaling = 0.5*im_max_px/im_reso
+        bpy.ops.uv.cube_project(scale_to_bounds=False,
+                                correct_aspect=True,
+                                cube_size=speckle_scaling)
         bpy.ops.object.editmode_toggle()
         # Add the material to the list
         self.materials.append(mat)
         return mat
         
     # Define method to set all the properties of the renderer    
-    def set_renderer(self, cam):
+    def set_renderer(self, cam, n_samples=100):
         scene = bpy.context.scene
         scene.camera = cam
         scene.render.filepath = self.output_path
@@ -224,7 +236,7 @@ class VirtExp:
         scene.render.image_settings.compression = 0
         scene.render.engine = 'CYCLES' #Working
         scene.cycles.device = 'GPU'
-        scene.cycles.samples = 100
+        scene.cycles.samples = n_samples
         scene.cycles.use_denoising = True
         scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
         scene.render.use_border = True
@@ -360,8 +372,11 @@ class VirtExp:
             # Aperture
             props["cam_fstop"] = random.uniform(fstop_min, fstop_max)
         return props
-               
-    def add_CAD_part(self, part_filepath):
+     
+    # This method imports a *.mesh file that contains information about FE
+    # nodes and elements to generate a part in blender. The mesh is then
+    # extruded to give some thickness to the part          
+    def add_CAD_part(self, part_filepath, thickness=0.002):
         # Read the mesh file
         with open(part_filepath, 'r') as file:
             lines = file.readlines()
@@ -369,10 +384,11 @@ class VirtExp:
             tag_lines = [i for i, line in enumerate(lines) \
                  if line.startswith('*Node') \
                  or line.startswith('*Element')]
-            # Define vertices
-            nodes = list((float(line.split(';')[1])*0.001, 
-                   float(line.split(';')[2])*0.001, 
-                   float(line.split(';')[3])*0.001) \
+            # Define vertices + scale to mm
+            # MatchID rotates the mesh by 180 deg
+            nodes = list((float(line.split(';')[1]) * (-0.001), 
+                   float(line.split(';')[2]) * (-0.001), 
+                   float(line.split(';')[3]) * 0.001) \
                   for i, line in enumerate(lines)
                 if not line.startswith('*') and i < tag_lines[1])
             # Define elements
@@ -388,5 +404,26 @@ class VirtExp:
         obj = bpy.data.objects.new("specimen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         part = bpy.data.objects["specimen"]
+        # Add thickness to the mesh
+        part.modifiers.new(name='solidify', type='SOLIDIFY')
+        part.modifiers["solidify"].thickness = thickness
+        # Return the object
         self.objects.append(part)
         return part
+    
+    # This method updates the position of nodes defining the geometry of the
+    # FE mesh, allowing to produce images of deformed specimen according to FEM
+    def deform_CAD_part(self, part, displ_filepath):
+        with open(displ_filepath, 'r') as file:
+            lines = file.readlines()
+            # Detect where nodes and elements begin
+            # Define vertices
+            nodes = list((float(line.split(';')[1])*0.001, 
+                   float(line.split(';')[2])*0.001, 
+                   float(line.split(';')[3])*0.001) \
+                  for line in lines \
+                if not line.startswith('*'))
+        # Update the coordinates
+        mesh = part.data
+        for i in range(len(mesh.vertices)):
+            mesh.vertices[i].co = nodes[i]                  

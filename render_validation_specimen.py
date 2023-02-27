@@ -12,14 +12,20 @@ import numpy as np
 pattern_path = r"D:\Experiment Quality\blender_model\im.tiff"
 normals_path = r"D:\Experiment Quality\blender_model\grad.tiff"
 model_path = r"D:\Experiment Quality\blender_model\model_dev.blend"
-output_path = r"D:\Experiment Quality\blender_model\render_0.tiff"
-output_path2 = r"D:\Experiment Quality\blender_model\render_1.tiff"
+output_path = r"D:\Experiment Quality\blender_model\render_0_0.tiff"
+output_path2 = r"D:\Experiment Quality\blender_model\render_0_1.tiff"
 mesh_path = r"D:\GitHub\speckle\test_specimen\fullSpec.mesh"
+displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
+                  r"D:\GitHub\speckle\test_specimen\fullSpec2.csv",
+                  r"D:\GitHub\speckle\test_specimen\fullSpec3.csv",
+                  r"D:\GitHub\speckle\test_specimen\fullSpec4.csv",
+                  r"D:\GitHub\speckle\test_specimen\fullSpec5.csv"]
+
 
 
 # Generate speckle pattern
 image_size = (2000, 3500)
-target_size = (100, 140)
+target_size = (70, 140)
 pixel_size_physical = 0.00345 # mm
 imaging_dist = 1000
 focal_length = 50
@@ -83,12 +89,23 @@ cam1 = a.add_camera(pos=p["cam1_pos"], orient=cam_angle,
 # Define the material and assign it to the cube
 a.add_material(target)
 # Set the renderer up and render image
-a.set_renderer(cam0)
+a.set_renderer(cam0, n_samples=500)
 # Save the model
 a.save_model()
 # Render the scene with the perpendicular camera
-#a.render_scene()
+a.render_scene(output_path)
 # Switch the camera to the cross one and render the scene
-#a.set_renderer(a.cameras[1])
-#a.render_scene(output_path2) 
+a.set_renderer(cam1, n_samples=500)
+a.render_scene(output_path2) 
 
+# Deform images
+for i, displ_file in enumerate(displ_filepath):
+    a.deform_CAD_part(target, displ_file)
+    # Render the scene with the perpendicular camera
+    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
+    a.set_renderer(cam0, n_samples=500)
+    a.render_scene(def_path)
+    # Switch the camera to the cross one and render the scene
+    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
+    a.set_renderer(cam1, n_samples=500)
+    a.render_scene(def_path) 
