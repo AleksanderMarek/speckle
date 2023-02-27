@@ -199,13 +199,13 @@ class VirtExp:
                                 mix_shader.outputs['Shader'])
         # Separate cube into faces for texture mapping
         ob = bpy.context.view_layer.objects.active
-        bpy.context.view_layer.objects.active
+        bpy.context.view_layer.objects.active = target
         # Assign the material to the cube
         target.data.materials.append(mat)
         target.select_set(True)
         #bpy.ops.outliner.item_activate(deselect_all=True)
         bpy.ops.object.editmode_toggle()
-        bpy.ops.uv.cube_project(scale_to_bounds=True)
+        bpy.ops.uv.cube_project(scale_to_bounds=False)
         bpy.ops.object.editmode_toggle()
         # Add the material to the list
         self.materials.append(mat)
@@ -361,3 +361,32 @@ class VirtExp:
             props["cam_fstop"] = random.uniform(fstop_min, fstop_max)
         return props
                
+    def add_CAD_part(self, part_filepath):
+        # Read the mesh file
+        with open(part_filepath, 'r') as file:
+            lines = file.readlines()
+            # Detect where nodes and elements begin
+            tag_lines = [i for i, line in enumerate(lines) \
+                 if line.startswith('*Node') \
+                 or line.startswith('*Element')]
+            # Define vertices
+            nodes = list((float(line.split(';')[1])*0.001, 
+                   float(line.split(';')[2])*0.001, 
+                   float(line.split(';')[3])*0.001) \
+                  for i, line in enumerate(lines)
+                if not line.startswith('*') and i < tag_lines[1])
+            # Define elements
+            elements = list((int(line.split(';')[1])-1, 
+                   int(line.split(';')[2])-1, 
+                   int(line.split(';')[3])-1,
+                   int(line.split(';')[4])-1) \
+                  for i, line in enumerate(lines)
+                if not line.startswith('*') and i > tag_lines[1])
+        # Create mesh
+        mesh = bpy.data.meshes.new("part")
+        mesh.from_pydata(nodes, [], elements)
+        obj = bpy.data.objects.new("specimen", mesh)
+        bpy.context.scene.collection.objects.link(obj)
+        part = bpy.data.objects["specimen"]
+        self.objects.append(part)
+        return part
