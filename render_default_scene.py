@@ -16,7 +16,7 @@ output_path2 = r"D:\Experiment Quality\blender_model\render_1.tiff"
 
 
 # Generate speckle pattern
-image_size = (1000, 1000)
+image_size = (2500, 2500)
 target_size = (100, 100)
 pixel_size_physical = 0.00345 # mm
 imaging_dist = 1000
@@ -25,6 +25,10 @@ M = focal_length / (imaging_dist - focal_length)
 pixel_size = pixel_size_physical/M
 speckle_size = 4.0 * pixel_size
 output_DPI = 600
+# Check if the size of the speckle pattern is sufficient
+if (output_DPI/25.4*target_size[0] > image_size[0]) or \
+    (output_DPI/25.4*target_size[1] > image_size[1]):
+    print("Warning: the resolution of the speckle pattern is too small!")
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
 im1 = pat1.gen_pattern()
