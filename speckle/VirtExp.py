@@ -116,8 +116,8 @@ class VirtExp:
         
     # Method to add a camera to the scene
     def add_camera(self, pos=(0, 0, 0), orient=(0, 0, 0), obj_distance=None, 
-                   fstop=0, focal_length=50.0, sensor_size=(8.4594, 7.0656),
-                   sensor_px=(2452, 2048), k1=0.0, k2=0.0, k3=0.0,
+                   fstop=0, focal_length=50.0, sensor_size=(8.4594, 7.0932),
+                   sensor_px=(2452, 2056), k1=0.0, k2=0.0, k3=0.0,
                    p1=0.0, p2=0.0, p3=0.0, c0=None, c1=None):    
         # Create new data and object for the camera
         cam1 = bpy.data.cameras.new("Camera")
@@ -236,7 +236,7 @@ class VirtExp:
         return mat
         
     # Define method to set all the properties of the renderer    
-    def set_renderer(self, cam, n_samples=100):
+    def set_renderer(self, cam, n_samples=100, denoising=False):
         scene = bpy.context.scene
         scene.camera = cam
         scene.render.filepath = self.output_path
@@ -246,12 +246,13 @@ class VirtExp:
         scene.render.image_settings.color_mode = 'BW'
         scene.render.image_settings.color_depth = '8'
         scene.render.image_settings.compression = 0
+        scene.render.image_settings.tiff_codec = 'NONE'
         scene.render.engine = 'CYCLES' #Working
         scene.cycles.device = 'GPU'
         scene.cycles.samples = n_samples
-        scene.cycles.use_denoising = True
+        scene.cycles.use_denoising = denoising
         scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
-        scene.render.use_border = True
+        scene.render.use_border = False
         scene.render.use_compositing = False
         
     # Method to calculate rotation between two 3D vectors using Euler angles
@@ -449,6 +450,7 @@ class VirtExp:
             bpy.ops.clip.open(files=[{"name": self.pattern_path}])
         clip = bpy.data.movieclips[0].tracking.camera
         clip.sensor_width = cam.data.sensor_width
+        clip.pixel_aspect = cam["sensor_px"][0]/cam["sensor_px"][1]
         clip.focal_length = cam.data.lens
         clip.distortion_model = 'BROWN'
         clip.brown_k1 = cam["k1"]
