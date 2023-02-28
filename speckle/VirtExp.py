@@ -138,6 +138,7 @@ class VirtExp:
         # Add custom fields and store number of pixels
         # Sensor size
         camera["sensor_px"] = sensor_px
+        camera["px_size"] = [i/j for i, j in zip(sensor_size, sensor_px)]
         #Cemera intrinsics
         camera["k1"] = k1
         camera["k2"] = k2
@@ -257,6 +258,7 @@ class VirtExp:
         
     # Method to calculate rotation between two 3D vectors using Euler angles
     def calc_rot_angle(self, dir1, dir2):
+        #TODO: Change Euler angles to quaternions
         # Normalise the directions
         dir1 /= np.linalg.norm(dir1) + 1e-16
         dir2 /= np.linalg.norm(dir2) + 1e-16
@@ -446,6 +448,7 @@ class VirtExp:
     def add_image_distortion(self, cam):
         # Define distortion model
         # If no movieclip (needed for distortion model) is present, load a file
+        # TODO: Try to sort out the path
         if len(bpy.data.movieclips) == 0:
             bpy.ops.clip.open(files=[{"name": self.pattern_path}])
         clip = bpy.data.movieclips[0].tracking.camera
@@ -481,7 +484,47 @@ class VirtExp:
                        composite_node.inputs[0])
         # Enable compositing
         scene.render.use_compositing = True
-
+        
+    # This method generates the calibration file for stereo DIC in MatchID    
+    def generate_calib_file(self, cam0, cam1, calib_filepath):
+        # Calculate rotation of cam0 to cam1
+        ang = [math.degrees(j-i) for i, j in \
+            zip(cam0.rotation_euler, cam1.rotation_euler)]
+        # Calculate translation of cam0 to cam1
+        dT = (cam0.location - cam1.location) * 1000
+        # Rotate the translation to the cam1 csys
+        dT_rot = dT
+        with open(calib_filepath, 'w') as file:
+            file.write('Cam1_Fx [pixels];' \
+                       + f'{cam0.data.lens/cam0["px_size"][0]}\n')
+            file.write('Cam1_Fy [pixels];' \
+                            + f'{cam0.data.lens/cam0["px_size"][1]}\n')
+            file.write('Cam1_Fs [pixels];0\n')
+            file.write(f'Cam1_Kappa 1;{cam0["k1"]}\n')
+            file.write(f'Cam1_Kappa 2;{cam0["k2"]}\n')
+            file.write(f'Cam1_Kappa 3;{cam0["k3"]}\n')
+            file.write(f'Cam1_P1;{cam0["p1"]}\n')
+            file.write(f'Cam1_P2;{cam0["p1"]}\n')
+            file.write(f'Cam1_Cx [pixels];{cam0["c0"]}\n')
+            file.write(f'Cam1_Cy [pixels];{cam0["c1"]}\n')
+            file.write('Cam2_Fx [pixels];' \
+                            + f'{cam1.data.lens/cam1["px_size"][0]}\n')
+            file.write('Cam2_Fy [pixels];' \
+                            + f'{cam1.data.lens/cam1["px_size"][1]}\n')
+            file.write('Cam2_Fs [pixels];0\n')
+            file.write(f'Cam2_Kappa 1;{cam1["k1"]}\n')
+            file.write(f'Cam2_Kappa 2;{cam1["k2"]}\n')
+            file.write(f'Cam2_Kappa 3;{cam1["k3"]}\n')
+            file.write(f'Cam2_P1;{cam1["p1"]}\n')
+            file.write(f'Cam2_P2;{cam1["p1"]}\n')
+            file.write(f'Cam2_Cx [pixels];{cam1["c0"]}\n')
+            file.write(f'Cam2_Cy [pixels];{cam1["c1"]}\n')
+            file.write(f'Tx [mm];{dT_rot[0]}\n')
+            file.write(f'Ty [mm];{dT_rot[1]}\n')
+            file.write(f'Tz [mm];{dT_rot[2]}\n')
+            file.write(f'Theta [deg];{ang[0]}\n')
+            file.write(f'Phi [deg];{ang[1]}\n')
+            file.write(f'Psi [deg];{ang[2]}')
 
 
 

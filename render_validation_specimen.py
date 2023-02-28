@@ -14,6 +14,7 @@ normals_path = r"D:\Experiment Quality\blender_model\grad.tiff"
 model_path = r"D:\Experiment Quality\blender_model\model_dev.blend"
 output_path = r"D:\Experiment Quality\blender_model\render_0_0.tiff"
 output_path2 = r"D:\Experiment Quality\blender_model\render_0_1.tiff"
+calib_path = r"D:\Experiment Quality\blender_model\calibration.caldat"
 mesh_path = r"D:\GitHub\speckle\test_specimen\fullSpec.mesh"
 displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
                   r"D:\GitHub\speckle\test_specimen\fullSpec2.csv",
@@ -49,11 +50,10 @@ normals_map.gen_pattern()
 normals_map.pattern_gradient()
 normals_map.generate_norm_map(binary_map=pat1.gradient)
 normals_map.grad_save(normals_path)
+
 # Generate blender scene
 a = VirtExp(pattern_path, normals_path, output_path, model_path,
             objects_position="fixed")
-
-
 # Set up the scene
 # Get default properties
 p = a.get_default_params()
@@ -90,6 +90,8 @@ cam1 = a.add_camera(pos=p["cam1_pos"], orient=cam_angle,
                        obj_distance=cam1_target_dist)         
 # Define the material and assign it to the cube
 a.add_material(target)
+# Write the calibration file
+a.generate_calib_file(cam0, cam1, calib_path)
 # Set the renderer up and render image
 a.set_renderer(cam0, n_samples=500)
 # Add distortion to the model

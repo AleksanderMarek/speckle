@@ -46,8 +46,10 @@ a = VirtExp(pattern_path, normals_path, output_path, model_path,
 # Set up the default scene
 a.create_def_scene()  
 # Render the scene with the perpendicular camera
+#a.add_image_distortion(a.cameras[0])
 a.render_scene()
 # Switch the camera to the cross one and render the scene
-a.set_renderer(a.cameras[1])
+#a.set_renderer(a.cameras[1])
+a.add_image_distortion(a.cameras[0])
 a.render_scene(output_path2) 
 
