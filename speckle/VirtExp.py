@@ -42,7 +42,8 @@ class VirtExp:
         p = self.get_default_params()
         # CAMERAS
         # Add the default target
-        target = self.add_cube(p["target_size"])
+        # target = self.add_cube(p["target_size"])
+        target = self.add_rect_target(p["target_size"])
         # Add the light panel
         # Calculate desired orientation of the light
         light_target_orient = p["light_target"] - np.array(p["light_pos"])
@@ -91,6 +92,27 @@ class VirtExp:
         cube = bpy.data.objects["Cube"]
         self.objects.append(cube)
         return cube
+    
+    # Method to place a new rectangular target in the scene
+    def add_rect_target(self, rect_size):
+        nodes = [(-rect_size[0]/2, rect_size[1]/2, 0),
+                 (-rect_size[0]/2, -rect_size[1]/2, 0),
+                 (rect_size[0]/2, -rect_size[1]/2, 0),
+                 (rect_size[0]/2, rect_size[1]/2, 0)]
+        elements = [(0, 1, 2, 3)]
+        thickness = rect_size[2]
+        # Create mesh
+        mesh = bpy.data.meshes.new("part")
+        mesh.from_pydata(nodes, [], elements)
+        obj = bpy.data.objects.new("specimen", mesh)
+        bpy.context.scene.collection.objects.link(obj)
+        part = bpy.data.objects["specimen"]
+        # Add thickness to the mesh
+        part.modifiers.new(name='solidify', type='SOLIDIFY')
+        part.modifiers["solidify"].thickness = thickness
+        # Return the object
+        self.objects.append(part)
+        return part
         
     # Method to place a new light in the scene
     def add_light(self, light_type, pos=(0, 0, 0), orient=(0, 0, 0), energy=0,
@@ -162,8 +184,7 @@ class VirtExp:
         mat.use_nodes = True
         tree =  mat.node_tree
         # Remove the default BSDF node
-        bsdf = tree.nodes["Principled BSDF"]
-        tree.nodes.remove(bsdf)
+        tree.nodes.remove(tree.nodes["Principled BSDF"])
         # Define specular node (Glossy BSDF)
         bsdf_glossy = mat.node_tree.nodes.new("ShaderNodeBsdfGlossy")
         bsdf_glossy.location = (-250, 408)
@@ -212,8 +233,10 @@ class VirtExp:
         tree.links.new(mat_output.inputs['Surface'], 
                                 mix_shader.outputs['Shader'])
         # Separate cube into faces for texture mapping
+        # Select the target and apply the material
         ob = bpy.context.view_layer.objects.active
-        bpy.context.view_layer.objects.active = target
+        if ob is None:
+            bpy.context.view_layer.objects.active = target
         # Assign the material to the cube
         target.data.materials.append(mat)
         target.select_set(True)
@@ -222,12 +245,9 @@ class VirtExp:
         # Project the mesh into a cube such that the specimen dimensions
         # fit the encoded physical speckles
         
-        # Find the size of the cube to project to as 0.5*max_size / DPI
-        im_max_px = max(texImage.image.size)
-        im_max_dim = [i for i, val in enumerate(texImage.image.size) \
-                      if val == im_max_px]
-        im_reso = texImage.image.resolution[im_max_dim[0]]
-        speckle_scaling = 0.5*im_max_px/im_reso
+        # Find the size of the cube to project to as size_X / DPI
+        speckle_scaling = texImage.image.size[0] / \
+            texImage.image.resolution[0]
         bpy.ops.uv.cube_project(scale_to_bounds=False,
                                 correct_aspect=True,
                                 cube_size=speckle_scaling)
@@ -448,7 +468,6 @@ class VirtExp:
     def add_image_distortion(self, cam):
         # Define distortion model
         # If no movieclip (needed for distortion model) is present, load a file
-        # TODO: Try to sort out the path
         if len(bpy.data.movieclips) == 0:
             bpy.ops.clip.open(files=[{ \
                               "name": self.pattern_path}],

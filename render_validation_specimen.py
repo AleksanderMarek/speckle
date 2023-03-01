@@ -27,7 +27,7 @@ displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
 
 # Generate speckle pattern
 image_size = (2000, 3500)
-target_size = (70, 140)
+target_size = (70, 160)
 pixel_size_physical = 0.00345 # mm
 imaging_dist = 1000
 focal_length = 50
@@ -93,29 +93,29 @@ a.add_material(target)
 # Write the calibration file
 a.generate_calib_file(cam0, cam1, calib_path)
 # Set the renderer up and render image
-a.set_renderer(cam0, n_samples=500)
+a.set_renderer(cam0, n_samples=50)
 # Add distortion to the model
 a.add_image_distortion(cam0)
 # Save the model
 a.save_model()
-# Render the scene with the perpendicular camera
-a.render_scene(output_path)
-# Switch the camera to the cross one and render the scene
-a.set_renderer(cam1, n_samples=500)
-# Add distortion to the model
-a.add_image_distortion(cam1)
-a.render_scene(output_path2) 
+# # Render the scene with the perpendicular camera
+# a.render_scene(output_path)
+# # Switch the camera to the cross one and render the scene
+# a.set_renderer(cam1, n_samples=50)
+# # Add distortion to the model
+# a.add_image_distortion(cam1)
+# a.render_scene(output_path2) 
 
-# Deform images
-for i, displ_file in enumerate(displ_filepath):
-    a.deform_FEA_part(target, displ_file)
-    # Render the scene with the perpendicular camera
-    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
-    a.set_renderer(cam0, n_samples=500)
-    a.add_image_distortion(cam0)
-    a.render_scene(def_path)
-    # Switch the camera to the cross one and render the scene
-    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
-    a.set_renderer(cam1, n_samples=500)
-    a.add_image_distortion(cam1)
-    a.render_scene(def_path) 
+# # Deform images
+# for i, displ_file in enumerate(displ_filepath):
+#     a.deform_FEA_part(target, displ_file)
+#     # Render the scene with the perpendicular camera
+#     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
+#     a.set_renderer(cam0, n_samples=500)
+#     a.add_image_distortion(cam0)
+#     a.render_scene(def_path)
+#     # Switch the camera to the cross one and render the scene
+#     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
+#     a.set_renderer(cam1, n_samples=500)
+#     a.add_image_distortion(cam1)
+#     a.render_scene(def_path) 
