@@ -450,7 +450,9 @@ class VirtExp:
         # If no movieclip (needed for distortion model) is present, load a file
         # TODO: Try to sort out the path
         if len(bpy.data.movieclips) == 0:
-            bpy.ops.clip.open(files=[{"name": self.pattern_path}])
+            bpy.ops.clip.open(files=[{ \
+                              "name": self.pattern_path}],
+                              relative_path=False)
         clip = bpy.data.movieclips[0].tracking.camera
         clip.sensor_width = cam.data.sensor_width
         clip.pixel_aspect = cam["sensor_px"][0]/cam["sensor_px"][1]
