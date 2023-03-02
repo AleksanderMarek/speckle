@@ -98,24 +98,29 @@ a.set_renderer(cam0, n_samples=50)
 a.add_image_distortion(cam0)
 # Save the model
 a.save_model()
-# # Render the scene with the perpendicular camera
-# a.render_scene(output_path)
-# # Switch the camera to the cross one and render the scene
-# a.set_renderer(cam1, n_samples=50)
-# # Add distortion to the model
-# a.add_image_distortion(cam1)
-# a.render_scene(output_path2) 
+# Render the scene with the perpendicular camera
+a.render_scene(output_path)
+# Switch the camera to the cross one and render the scene
+a.set_renderer(cam1, n_samples=50)
+# Add distortion to the model
+a.add_image_distortion(cam1)
+a.render_scene(output_path2) 
 
-# # Deform images
-# for i, displ_file in enumerate(displ_filepath):
-#     a.deform_FEA_part(target, displ_file)
-#     # Render the scene with the perpendicular camera
-#     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
-#     a.set_renderer(cam0, n_samples=500)
-#     a.add_image_distortion(cam0)
-#     a.render_scene(def_path)
-#     # Switch the camera to the cross one and render the scene
-#     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
-#     a.set_renderer(cam1, n_samples=500)
-#     a.add_image_distortion(cam1)
-#     a.render_scene(def_path) 
+# Deform images
+for i, displ_file in enumerate(displ_filepath):
+    # Update position of FE nodes
+    a.deform_FEA_part(target, displ_file)
+    # Add another frame to the animation
+    a.set_new_frame(target)
+    # Render the scene with the perpendicular camera
+    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
+    a.set_renderer(cam0, n_samples=50)
+    a.add_image_distortion(cam0)
+    a.render_scene(def_path)
+    # Switch the camera to the cross one and render the scene
+    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
+    a.set_renderer(cam1, n_samples=50)
+    a.add_image_distortion(cam1)
+    a.render_scene(def_path) 
+# Save final model    
+a.save_model()

@@ -5,7 +5,7 @@ such as lights and cameras, as well as texturing of the target and setting
 of light scattering properties to create more realistic images
 
 Writen by Aleksander Marek, aleksander.marek.pl@gmail.com
-19/0/2023
+19/01/2023
 
 """
 
@@ -69,9 +69,9 @@ class VirtExp:
         cam1_target_dist = np.linalg.norm(cam1_target_orient)+1e-16
         cam_angle = self.calc_rot_angle(p["cam_init_rot"], cam1_target_orient)
         self.add_camera(pos=p["cam1_pos"], orient=cam_angle,
-                               fstop=p["cam_fstop"],
-                               focal_length=p["cam_foc_length"],
-                               obj_distance=cam1_target_dist)
+                        fstop=p["cam_fstop"],
+                        focal_length=p["cam_foc_length"],
+                        obj_distance=cam1_target_dist)
         # Define the material and assign it to the cube
         self.add_material(target)
         # Set the renderer up and render image
@@ -450,6 +450,14 @@ class VirtExp:
     # This method updates the position of nodes defining the geometry of the
     # FE mesh, allowing to produce images of deformed specimen according to FEM
     def deform_FEA_part(self, part, displ_filepath):
+        # Create key shape
+        if part.data.shape_keys is None:
+            part.shape_key_add()
+            # Write the first animation frame
+            self.set_new_frame(part)
+        sk = part.shape_key_add()
+        part.data.shape_keys.use_relative = False
+        # Load deformed displacements
         with open(displ_filepath, 'r') as file:
             lines = file.readlines()
             # Detect where nodes and elements begin
@@ -460,9 +468,8 @@ class VirtExp:
                          for line in lines
                          if not line.startswith('*'))
         # Update the coordinates
-        mesh = part.data
-        for i in range(len(mesh.vertices)):
-            mesh.vertices[i].co = nodes[i]
+        for i in range(len(part.data.vertices)):
+            sk.data[i].co = nodes[i]
 
     # This method adds optical distortions to the rendered image
     def add_image_distortion(self, cam):
@@ -505,6 +512,8 @@ class VirtExp:
                        composite_node.inputs[0])
         # Enable compositing
         scene.render.use_compositing = True
+        # Update the view
+        bpy.context.view_layer.update()
 
     # This method generates the calibration file for stereo DIC in MatchID
     def generate_calib_file(self, cam0, cam1, calib_filepath):
@@ -546,3 +555,22 @@ class VirtExp:
             file.write(f'Theta [deg];{ang[0]}\n')
             file.write(f'Phi [deg];{ang[1]}\n')
             file.write(f'Psi [deg];{ang[2]}')
+
+    # Method to enable animation in .blender file 
+    def set_new_frame(self, obj):
+        frame_incr = 20
+        # Make the object active
+        ob = bpy.context.view_layer.objects.active
+        if ob is None:
+            bpy.context.view_layer.objects.active = obj
+        # Get the current animation frame and increment it     
+        current_frame = bpy.context.scene.frame_current
+        current_frame += frame_incr
+        bpy.context.scene.frame_set(current_frame)
+        # Insert a new keyframe based on the generated keyposes
+        bpy.data.shape_keys["Key"].eval_time = current_frame
+        obj.data.shape_keys.keyframe_insert('eval_time',
+                                            frame=current_frame)
+        bpy.context.scene.frame_end = current_frame
+        # bpy.context.view_layer.update()
+        
