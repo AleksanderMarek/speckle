@@ -116,8 +116,8 @@ class VirtExp:
         return part
 
     # Method to place a new light in the scene
-    def add_light(self, light_type, pos=(0, 0, 0), orient=(0, 0, 0), energy=0,
-                  spot_size=0, spot_blend=0, shadow_spot_size=0):
+    def add_light(self, light_type, pos=(0, 0, 0), orient=(1, 0, 0, 0),
+                  energy=0, spot_size=0, spot_blend=0, shadow_spot_size=0):
         if light_type == "SPOT":
             # Assign properties to the spotlight
             light = bpy.data.lights.new(name="Spot", type='SPOT')
@@ -127,7 +127,8 @@ class VirtExp:
             bpy.context.collection.objects.link(light_ob)
             # Position the light in the scene
             light_ob.location = pos
-            light_ob.rotation_euler = orient
+            light_ob.rotation_mode = 'QUATERNION'
+            light_ob.rotation_quaternion = orient
             # DEfine the properties of the lamp
             light.energy = energy
             light.spot_size = spot_size
@@ -138,7 +139,7 @@ class VirtExp:
             return light_ob
 
     # Method to add a camera to the scene
-    def add_camera(self, pos=(0, 0, 0), orient=(0, 0, 0), obj_distance=None,
+    def add_camera(self, pos=(0, 0, 0), orient=(1, 0, 0, 0), obj_distance=None,
                    fstop=0, focal_length=50.0, sensor_size=(8.4594, 7.0932),
                    sensor_px=(2452, 2056), k1=0.0, k2=0.0, k3=0.0,
                    p1=0.0, p2=0.0, p3=0.0, c0=None, c1=None):
@@ -149,7 +150,8 @@ class VirtExp:
         bpy.context.collection.objects.link(camera)
         # Define camera properties
         camera.location = pos
-        camera.rotation_euler = orient
+        camera.rotation_mode = 'QUATERNION'
+        camera.rotation_quaternion = orient
         cam1.lens = focal_length
         cam1.sensor_width = sensor_size[0]
         cam1.sensor_height = sensor_size[1]
@@ -278,23 +280,83 @@ class VirtExp:
 
     # Method to calculate rotation between two 3D vectors using Euler angles
     def calc_rot_angle(self, dir1, dir2):
-        # TODO: Change Euler angles to quaternions
         # Normalise the directions
         dir1 /= np.linalg.norm(dir1) + 1e-16
         dir2 /= np.linalg.norm(dir2) + 1e-16
-        # Calculate the rotation matrix using Rodriguez' formula
-        v = np.cross(dir1, dir2)
-        s = np.linalg.norm(v)+1e-16
-        c = np.dot(dir1, dir2)
-        v_skew = np.array([
-            [0, -v[2], v[1]],
-            [v[2], 0, -v[0]],
-            [-v[1], v[0], 0]
-        ])
-        rot_mat = np.eye(3) + v_skew + np.dot(v_skew, v_skew)*(1-c)/s**2
-        rot_mat = mathutils.Matrix(rot_mat)
-        ang_euler = rot_mat.to_euler("XYZ")
-        return ang_euler
+        # Calculate the axis of rotation
+        rot_axis = np.cross(dir1, dir2)
+        rot_axis = np.insert(rot_axis, 0, 1 + np.dot(dir1, dir2))
+        rot_axis /= np.linalg.norm(rot_axis)
+        rot_quat = mathutils.Quaternion(rot_axis)
+        return rot_quat
+
+    # Method to multiply two quaternions
+    def quaternion_multiply(self, q0, q1):
+        w0, x0, y0, z0 = q0
+        w1, x1, y1, z1 = q1
+        return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                         x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                         -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                         x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0],
+                        dtype=np.float64)
+
+    # Method to divide two quaternions
+    def quaternion_conjugate(self, q0):
+        if type(q0) is list or type(q0) is mathutils.Quaternion:
+            q0_conj = [-j if i > 0 else j for i, j in enumerate(q0)]
+        elif type(q0) is np.ndarray:
+            q0_conj = np.array([-j if i > 0 else j for i, j in enumerate(q0)])
+        return q0_conj
+
+    # Method to convert vector to quaternion
+    def vec_to_quaternion(self, v):
+        if np.linalg.norm(v) == 0:
+            w = 1.0
+        else:
+            w = 0.0
+        if type(v) is list:
+            v.insert(0, w)
+            np.array(v)
+        elif type(v) is np.ndarray:
+            v = np.insert(v, 0, w)
+        elif type(v) is mathutils.Vector:
+            v = list(v)
+            v.insert(0, w)
+            np.array(v)
+        return v
+
+    def rotate_vec(self, v, q):
+        # Convert the vector to quaternion
+        v = self.vec_to_quaternion(v)
+        # Calculate the conjugate of rotation quaternion
+        q_conj = self.quaternion_conjugate(q)
+        # Rotate the vector
+        v = self.quaternion_multiply(
+            self.quaternion_multiply(q, v), q_conj)
+        v = v[1:]
+        return v
+
+    # Add rotation around z-axis
+    def rotate_around_z(self, obj, ang_z):
+        # Convert ang from degrees to radians
+        ang_z = math.radians(ang_z)
+        # Find the current orientation of z-axis
+        orient_matrix = obj.matrix_world
+        z_axis = [orient_matrix[0][2],
+                  orient_matrix[1][2],
+                  orient_matrix[2][2]]
+        # Retrieve the orientation in quaternions
+        q = obj.rotation_quaternion
+        # Create rotation vector around the z-axis
+        qz = np.array([math.cos(ang_z/2),
+                       z_axis[0]*math.sin(ang_z/2),
+                       z_axis[1]*math.sin(ang_z/2),
+                       z_axis[2]*math.sin(ang_z/2)])
+        qz /= np.linalg.norm(qz) + 1e-16
+        # Multiply the original orientation with the rotation quaternion
+        q2 = self.quaternion_multiply(qz, q)
+        # Update the object orientation
+        obj.rotation_quaternion = q2
 
     # Method to remove an object from the scene
     def remove_object(self, obj):
@@ -516,14 +578,22 @@ class VirtExp:
         bpy.context.view_layer.update()
 
     # This method generates the calibration file for stereo DIC in MatchID
-    def generate_calib_file(self, cam0, cam1, calib_filepath):
+    def generate_calib_file(self, cam0, cam1, calib_filepath, ang_mode='ZXY'):
         # Calculate rotation of cam0 to cam1
-        ang = [math.degrees(j-i) for i, j in
-               zip(cam0.rotation_euler, cam1.rotation_euler)]
+        cam0_orient = cam0.rotation_quaternion
+        cam1_orient = cam1.rotation_quaternion
+        q_rot = self.quaternion_multiply(
+            cam1_orient,
+            self.quaternion_conjugate(cam0_orient))
+        q_rot_conj = self.quaternion_conjugate(q_rot)
+        q_rot = mathutils.Quaternion(q_rot)
+        ang = q_rot.to_euler(ang_mode)
+        ang = [math.degrees(i) for i in ang]
         # Calculate translation of cam0 to cam1
-        dT = (cam0.location - cam1.location) * 1000
+        dT = (cam1.location - cam0.location) * 1000
+        dT[2] *= -1
         # Rotate the translation to the cam1 csys
-        dT_rot = dT
+        dT_rot = self.rotate_vec(dT, q_rot_conj)
         with open(calib_filepath, 'w') as file:
             file.write('Cam1_Fx [pixels];'
                        + f'{cam0.data.lens/cam0["px_size"][0]}\n')
@@ -556,14 +626,14 @@ class VirtExp:
             file.write(f'Phi [deg];{ang[1]}\n')
             file.write(f'Psi [deg];{ang[2]}')
 
-    # Method to enable animation in .blender file 
+    # Method to enable animation in .blender file
     def set_new_frame(self, obj):
         frame_incr = 20
         # Make the object active
         ob = bpy.context.view_layer.objects.active
         if ob is None:
             bpy.context.view_layer.objects.active = obj
-        # Get the current animation frame and increment it     
+        # Get the current animation frame and increment it
         current_frame = bpy.context.scene.frame_current
         current_frame += frame_incr
         bpy.context.scene.frame_set(current_frame)
@@ -573,4 +643,3 @@ class VirtExp:
                                             frame=current_frame)
         bpy.context.scene.frame_end = current_frame
         # bpy.context.view_layer.update()
-        

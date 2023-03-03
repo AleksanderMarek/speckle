@@ -24,11 +24,10 @@ displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
 # displ_filepath = []
 
 
-
 # Generate speckle pattern
 image_size = (2000, 3500)
 target_size = (70, 160)
-pixel_size_physical = 0.00345 # mm
+pixel_size_physical = 0.00345  # mm
 imaging_dist = 1000
 focal_length = 50
 M = focal_length / (imaging_dist - focal_length)
@@ -37,7 +36,7 @@ speckle_size = 4.0 * pixel_size
 output_DPI = 600
 # Check if the size of the speckle pattern is sufficient
 if (output_DPI/25.4*target_size[0] > image_size[0]) or \
-    (output_DPI/25.4*target_size[1] > image_size[1]):
+        (output_DPI/25.4*target_size[1] > image_size[1]):
     print("Warning: the resolution of the speckle pattern is too small!")
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
@@ -64,30 +63,31 @@ target = a.add_FEA_part(mesh_path)
 # Calculate desired orientation of the light
 light_target_orient = p["light_target"] - np.array(p["light_pos"])
 # Calculate the rotation angle of the light
-light_angle = a.calc_rot_angle(p["light_init_rot"], 
-                                  light_target_orient)
+light_angle = a.calc_rot_angle(p["light_init_rot"],
+                               light_target_orient)
 a.add_light(p["light_type"], pos=p["light_pos"], orient=light_angle,
-               energy=p["light_energy"], spot_size=p["light_spotsize"],
-               spot_blend=p["light_spot_blend"], 
-               shadow_spot_size = p["light_shad_spot"])
+            energy=p["light_energy"], spot_size=p["light_spotsize"],
+            spot_blend=p["light_spot_blend"],
+            shadow_spot_size=p["light_shad_spot"])
 # Add straight camera
 # Calculate desired orientation of the cam
-cam0_target_orient = p["cam0_target"] - np.array(p["cam0_pos"]) 
+cam0_target_orient = p["cam0_target"] - np.array(p["cam0_pos"])
 cam0_target_dist = np.linalg.norm(cam0_target_orient)+1e-16
 cam_angle = a.calc_rot_angle(p["cam_init_rot"], cam0_target_orient)
-cam0 = a.add_camera(pos=p["cam0_pos"], orient=cam_angle, 
-                       fstop=p["cam_fstop"], 
-                       focal_length=p["cam_foc_length"],
-                       obj_distance=cam0_target_dist,
-                       k1=0.0, p1=0.00)  
+cam0 = a.add_camera(pos=p["cam0_pos"], orient=cam_angle,
+                    fstop=p["cam_fstop"],
+                    focal_length=p["cam_foc_length"],
+                    obj_distance=cam0_target_dist,
+                    k1=0.0, p1=0.00)
 # Add cross camera
 cam1_target_orient = p["cam1_target"] - np.array(p["cam1_pos"])
 cam1_target_dist = np.linalg.norm(cam1_target_orient)+1e-16
 cam_angle = a.calc_rot_angle(p["cam_init_rot"], cam1_target_orient)
-cam1 = a.add_camera(pos=p["cam1_pos"], orient=cam_angle, 
-                       fstop=p["cam_fstop"],
-                       focal_length=p["cam_foc_length"],
-                       obj_distance=cam1_target_dist)         
+cam1 = a.add_camera(pos=p["cam1_pos"], orient=cam_angle,
+                    fstop=p["cam_fstop"],
+                    focal_length=p["cam_foc_length"],
+                    obj_distance=cam1_target_dist)
+a.rotate_around_z(cam1, 5.0)
 # Define the material and assign it to the cube
 a.add_material(target)
 # Write the calibration file
@@ -104,7 +104,7 @@ a.render_scene(output_path)
 a.set_renderer(cam1, n_samples=50)
 # Add distortion to the model
 a.add_image_distortion(cam1)
-a.render_scene(output_path2) 
+a.render_scene(output_path2)
 
 # Deform images
 for i, displ_file in enumerate(displ_filepath):
@@ -121,6 +121,6 @@ for i, displ_file in enumerate(displ_filepath):
     def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
     a.set_renderer(cam1, n_samples=50)
     a.add_image_distortion(cam1)
-    a.render_scene(def_path) 
-# Save final model    
+    a.render_scene(def_path)
+# Save final model
 a.save_model()
