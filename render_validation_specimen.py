@@ -8,12 +8,14 @@ at an angle of 15 degrees to the target
 from speckle import VirtExp
 import speckle
 import numpy as np
+import os
 
 pattern_path = r"D:\Experiment Quality\blender_model\im.tiff"
 normals_path = r"D:\Experiment Quality\blender_model\grad.tiff"
 model_path = r"D:\Experiment Quality\blender_model\model_dev.blend"
-output_path = r"D:\Experiment Quality\blender_model\render_0_0.tiff"
-output_path2 = r"D:\Experiment Quality\blender_model\render_0_1.tiff"
+output_folder = r"D:\Experiment Quality\blender_model"
+output_path = os.path.join(output_folder, "render_0_0.tiff")
+output_path2 = os.path.join(output_folder, "render_0_1.tiff")
 calib_path = r"D:\Experiment Quality\blender_model\calibration.caldat"
 mesh_path = r"D:\GitHub\speckle\test_specimen\fullSpec.mesh"
 displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
@@ -123,12 +125,12 @@ for i, displ_file in enumerate(displ_filepath):
     # Add another frame to the animation
     a.set_new_frame(target)
     # Render the scene with the perpendicular camera
-    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_0.tiff"
+    def_path = os.path.join(output_folder, f"render_{i+1}_0.tiff")
     a.set_renderer(cam0, n_samples=n_samples)
     a.add_image_distortion(cam0)
     a.render_scene(def_path)
     # Switch the camera to the cross one and render the scene
-    def_path = f"D:\\Experiment Quality\\blender_model\\render_{i+1}_1.tiff"
+    def_path = os.path.join(output_folder, f"render_{i+1}_1.tiff")
     a.set_renderer(cam1, n_samples=n_samples)
     a.add_image_distortion(cam1)
     a.render_scene(def_path)
