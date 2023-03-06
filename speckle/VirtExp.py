@@ -337,6 +337,12 @@ class VirtExp:
             self.quaternion_multiply(q, v), q_conj)
         v = v[1:]
         return v
+    
+    def rotate_quaternion(self, q0, q1):
+        q0_conj = self.quaternion_conjugate(q0)
+        q2 = self.quaternion_multiply(
+            self.quaternion_multiply(q0, q1), q0_conj)
+        return q2
 
     # Add rotation around z-axis
     def rotate_around_z(self, obj, ang_z):
@@ -580,20 +586,28 @@ class VirtExp:
         bpy.context.view_layer.update()
 
     # This method generates the calibration file for stereo DIC in MatchID
-    def generate_calib_file(self, cam0, cam1, calib_filepath, ang_mode='ZXY'):
+    def generate_calib_file(self, cam0, cam1, calib_filepath, ang_mode='XYZ'):
         # Calculate rotation of cam0 to cam1
         cam0_orient = cam0.rotation_quaternion
         cam1_orient = cam1.rotation_quaternion
+        # Rotate orientations 180 deg around x axis. Blender and MatchIDs 
+        # coordinate systems are not compatible, this rotation corresponds to
+        # reflection around x-z and then x-y planes.
+        q_x = [math.cos(np.pi/2), math.sin(np.pi/2), 0, 0] # x-axis rotation
+        cam0_orient = self.rotate_quaternion(q_x, cam0_orient)
+        cam1_orient = self.rotate_quaternion(q_x, cam1_orient)
+        # Calculate quaternion rotating one camera to the other
         q_rot = self.quaternion_multiply(
-            cam1_orient,
-            self.quaternion_conjugate(cam0_orient))
+            cam0_orient,
+            self.quaternion_conjugate(cam1_orient))
         q_rot_conj = self.quaternion_conjugate(q_rot)
         q_rot = mathutils.Quaternion(q_rot)
         ang = q_rot.to_euler(ang_mode)
         ang = [math.degrees(i) for i in ang]
         # Calculate translation of cam0 to cam1
-        dT = (cam1.location - cam0.location) * 1000
-        dT[2] *= -1
+        dT = (cam0.location - cam1.location) * 1000
+        dT[2] *= -1 #reflect z-axis
+        dT[1] *= -1 #reflect y-axis
         # Rotate the translation to the cam1 csys
         dT_rot = self.rotate_vec(dT, q_rot_conj)
         with open(calib_filepath, 'w') as file:
@@ -606,7 +620,7 @@ class VirtExp:
             file.write(f'Cam1_Kappa 2;{cam0["k2"]}\n')
             file.write(f'Cam1_Kappa 3;{cam0["k3"]}\n')
             file.write(f'Cam1_P1;{cam0["p1"]}\n')
-            file.write(f'Cam1_P2;{cam0["p1"]}\n')
+            file.write(f'Cam1_P2;{cam0["p2"]}\n')
             file.write(f'Cam1_Cx [pixels];{cam0["c0"]}\n')
             file.write(f'Cam1_Cy [pixels];{cam0["c1"]}\n')
             file.write('Cam2_Fx [pixels];'
@@ -618,7 +632,7 @@ class VirtExp:
             file.write(f'Cam2_Kappa 2;{cam1["k2"]}\n')
             file.write(f'Cam2_Kappa 3;{cam1["k3"]}\n')
             file.write(f'Cam2_P1;{cam1["p1"]}\n')
-            file.write(f'Cam2_P2;{cam1["p1"]}\n')
+            file.write(f'Cam2_P2;{cam1["p2"]}\n')
             file.write(f'Cam2_Cx [pixels];{cam1["c0"]}\n')
             file.write(f'Cam2_Cy [pixels];{cam1["c1"]}\n')
             file.write(f'Tx [mm];{dT_rot[0]}\n')
