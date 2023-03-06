@@ -35,6 +35,7 @@ class VirtExp:
         self.materials = list()
         # Reset the default scene from blender
         bpy.ops.wm.read_factory_settings(use_empty=True)
+        bpy.context.scene.unit_settings.length_unit = 'MILLIMETERS'
 
     # Create the default scene
 
@@ -171,9 +172,9 @@ class VirtExp:
         camera["p1"] = p1
         camera["p2"] = p2
         if c0 is None:
-            camera["c0"] = sensor_px[0]/2
+            camera["c0"] = (sensor_px[0])/2
         if c1 is None:
-            camera["c1"] = sensor_px[1]/2
+            camera["c1"] = (sensor_px[1])/2
         # Append to the camera list
         self.cameras.append(camera)
         return camera
@@ -247,9 +248,10 @@ class VirtExp:
         # Project the mesh into a cube such that the specimen dimensions
         # fit the encoded physical speckles
 
-        # Find the size of the cube to project to as size_X / DPI
-        speckle_scaling = texImage.image.size[0] / \
-            texImage.image.resolution[0]
+        # Find the size of the cube to project to as min(size) / DPI
+        small_dim = np.argmin(texImage.image.size) 
+        speckle_scaling = texImage.image.size[small_dim] / \
+            texImage.image.resolution[small_dim]
         bpy.ops.uv.cube_project(scale_to_bounds=False,
                                 correct_aspect=True,
                                 cube_size=speckle_scaling)
