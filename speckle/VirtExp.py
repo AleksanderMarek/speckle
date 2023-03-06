@@ -609,7 +609,8 @@ class VirtExp:
         dT[2] *= -1 #reflect z-axis
         dT[1] *= -1 #reflect y-axis
         # Rotate the translation to the cam1 csys
-        dT_rot = self.rotate_vec(dT, q_rot_conj)
+        # First apply rotatation of dT from global to cam0, then cam0->cam1
+        dT_rot = self.rotate_vec(self.rotate_vec(dT, cam0_orient), q_rot_conj)
         with open(calib_filepath, 'w') as file:
             file.write('Cam1_Fx [pixels];'
                        + f'{cam0.data.lens/cam0["px_size"][0]}\n')
