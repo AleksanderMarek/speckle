@@ -26,13 +26,13 @@ class VirtExp:
         Constructor
         """
         # Properties of the scene
-        self.pattern_path = pattern_path # Speckle pattern
-        self.normal_map_path = normal_map_path # Normals map for specularity
-        self.output_path = output_path # Default output path
-        self.model_path = model_path # Path for *.blend path
-        self.objects_position = objects_position # Default position of objects
+        self.pattern_path = pattern_path  # Speckle pattern
+        self.normal_map_path = normal_map_path  # Normals map for specularity
+        self.output_path = output_path  # Default output path
+        self.model_path = model_path  # Path for *.blend path
+        self.objects_position = objects_position  # Default position of objects
         # Containers for different objects
-        self.objects = list() 
+        self.objects = list()
         self.lights = list()
         self.cameras = list()
         self.materials = list()
@@ -76,8 +76,7 @@ class VirtExp:
         part.modifiers["solidify"].thickness = thickness
         # Return the object
         self.objects.append(part)
-        return part    
-    
+        return part
 
     def add_FEA_part(self, part_filepath, thickness=0.002):
         """
@@ -131,7 +130,7 @@ class VirtExp:
         # Return the object
         self.objects.append(part)
         return part
-    
+
     # ADDING ELEMENTS TO THE SCENE
     def add_light(self, light_type, pos=(0, 0, 0), orient=(1, 0, 0, 0),
                   energy=0, spot_size=0, spot_blend=0, shadow_spot_size=0):
@@ -181,7 +180,6 @@ class VirtExp:
             self.lights.append(light_ob)
             return light_ob
 
-    
     def add_camera(self, pos=(0, 0, 0), orient=(1, 0, 0, 0), obj_distance=None,
                    fstop=0, focal_length=50.0, sensor_size=(8.4594, 7.0932),
                    sensor_px=(2452, 2056), k1=0.0, k2=0.0, k3=0.0,
@@ -344,7 +342,7 @@ class VirtExp:
         # fit the encoded physical speckles
 
         # Find the size of the cube to project to as min(size) / DPI
-        small_dim = np.argmin(texImage.image.size) 
+        small_dim = np.argmin(texImage.image.size)
         speckle_scaling = texImage.image.size[small_dim] / \
             texImage.image.resolution[small_dim]
         bpy.ops.uv.cube_project(scale_to_bounds=False,
@@ -376,22 +374,22 @@ class VirtExp:
         scene.cycles.use_denoising = denoising
         scene.cycles.denoising_input_passes = 'RGB_ALBEDO'
         scene.render.use_border = False
-        scene.render.use_compositing = False   
-        
+        scene.render.use_compositing = False
+
     def render_scene(self, filepath=None):
         """
         Method to render the scene and save the output to filepath
         """
         if filepath is not None:
             bpy.context.scene.render.filepath = filepath
-        bpy.ops.render.render(write_still=True)        
+        bpy.ops.render.render(write_still=True)
 
     def save_model(self):
         """
         Save the blender model to a file
         """
         if self.model_path is not None:
-            bpy.ops.wm.save_as_mainfile(filepath=self.model_path)    
+            bpy.ops.wm.save_as_mainfile(filepath=self.model_path)
 
     def add_image_distortion(self, cam, im_path):
         """
@@ -414,7 +412,7 @@ class VirtExp:
             bpy.ops.clip.open(files=[{
                               "name": im_path}],
                               relative_path=False)
-        # Apply parameters to the distortion model    
+        # Apply parameters to the distortion model
         clip = bpy.data.movieclips[0].tracking.camera
         clip.sensor_width = cam.data.sensor_width
         clip.pixel_aspect = cam["sensor_px"][0]/cam["sensor_px"][1]
@@ -423,7 +421,7 @@ class VirtExp:
         clip.brown_k1 = cam["k1"]
         clip.brown_k2 = cam["k2"]
         clip.brown_k3 = cam["k3"]
-        clip.brown_p1 = cam["p2"] # MatchID permutes p1/p2 compared to blender
+        clip.brown_p1 = cam["p2"]  # MatchID permutes p1/p2 compared to blender
         clip.brown_p2 = -cam["p1"]
         clip.principal[0] = cam["c0"]
         clip.principal[1] = cam["c1"]
@@ -467,10 +465,10 @@ class VirtExp:
         # the resulting quaternion is converted to Euler angles
         cam0_orient = cam0.rotation_quaternion
         cam1_orient = cam1.rotation_quaternion
-        # Rotate orientations 180 deg around x axis. Blender and MatchIDs 
+        # Rotate orientations 180 deg around x axis. Blender and MatchIDs
         # coordinate systems are not compatible, this rotation corresponds to
         # reflection around x-z and then x-y planes.
-        q_x = [math.cos(np.pi/2), math.sin(np.pi/2), 0, 0] # x-axis rotation
+        q_x = [math.cos(np.pi/2), math.sin(np.pi/2), 0, 0]  # x-axis rotation
         cam0_orient = self.rotate_quaternion(q_x, cam0_orient)
         cam1_orient = self.rotate_quaternion(q_x, cam1_orient)
         # Calculate quaternion rotating one camera to the other
@@ -484,8 +482,8 @@ class VirtExp:
         # Calculate translation of cam0 to cam1 and rotate the vector
         # to the orientation of cam1
         dT = (cam0.location - cam1.location) * 1000
-        dT[2] *= -1 #reflect z-axis
-        dT[1] *= -1 #reflect y-axis
+        dT[2] *= -1  # reflect z-axis
+        dT[1] *= -1  # reflect y-axis
         # Rotate the translation to the cam1 csys
         # First apply rotatation of dT from global to cam0, then cam0->cam1
         dT_rot = self.rotate_vec(self.rotate_vec(dT, cam0_orient), q_rot_conj)
@@ -553,7 +551,7 @@ class VirtExp:
                          if not line.startswith('*'))
         # Update the coordinates
         for i in range(len(part.data.vertices)):
-            sk.data[i].co = nodes[i]    
+            sk.data[i].co = nodes[i]
 
     def set_new_frame(self, obj):
         """
@@ -622,7 +620,7 @@ class VirtExp:
         self.set_renderer(cam0)
         # Save the model
         self.save_model()
-        
+
     def get_default_params(self):
         """
         This method contains parameters (such as positions, materials, 
@@ -724,10 +722,10 @@ class VirtExp:
                 0.0)
             # Aperture
             props["cam_fstop"] = random.uniform(fstop_min, fstop_max)
-        return props        
+        return props
 
-        
     # HELPER FUNCTIONS
+
     def calc_rot_angle(self, dir1, dir2):
         """
         Method to calculate rotation between two 3D vectors using Euler angles.
@@ -807,9 +805,9 @@ class VirtExp:
         v = self.quaternion_multiply(
             self.quaternion_multiply(q, v), q_conj)
         # Output vector is the imaginary part of the quaternion
-        v = v[1:] 
+        v = v[1:]
         return v
-    
+
     def rotate_quaternion(self, q0, q1):
         """ Rotate quaternion q0 by quaternion q1 according to the formula:
             q0 = q1.q0.conj(q0)

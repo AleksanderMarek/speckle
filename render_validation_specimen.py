@@ -18,7 +18,7 @@ output_path = os.path.join(output_folder, "render_0_0.tiff")
 output_path2 = os.path.join(output_folder, "render_0_1.tiff")
 calib_path = os.path.join(output_folder, "calibration.caldat")
 mesh_path = os.path.join(os.getcwd(), "test_specimen", "fullSpec.mesh")
-displ_filepath = [os.path.join(os.getcwd(), "test_specimen", 
+displ_filepath = [os.path.join(os.getcwd(), "test_specimen",
                                f"fullSpec{i}.csv") for i in range(1, 6)]
 # displ_filepath = []
 
