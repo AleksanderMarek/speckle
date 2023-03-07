@@ -10,19 +10,16 @@ import speckle
 import numpy as np
 import os
 
-pattern_path = r"D:\Experiment Quality\blender_model\im.tiff"
-normals_path = r"D:\Experiment Quality\blender_model\grad.tiff"
-model_path = r"D:\Experiment Quality\blender_model\model_dev.blend"
-output_folder = r"D:\Experiment Quality\blender_model"
+output_folder = r"D:\Experiment Quality\Correlation test\compliant_spec"
+pattern_path = os.path.join(output_folder, "im.tiff")
+normals_path = os.path.join(output_folder, "grad.tiff")
+model_path = os.path.join(output_folder, "model.blend")
 output_path = os.path.join(output_folder, "render_0_0.tiff")
 output_path2 = os.path.join(output_folder, "render_0_1.tiff")
-calib_path = r"D:\Experiment Quality\blender_model\calibration.caldat"
-mesh_path = r"D:\GitHub\speckle\test_specimen\fullSpec.mesh"
-displ_filepath = [r"D:\GitHub\speckle\test_specimen\fullSpec1.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec2.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec3.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec4.csv",
-                  r"D:\GitHub\speckle\test_specimen\fullSpec5.csv"]
+calib_path = os.path.join(output_folder, "calibration.caldat")
+mesh_path = os.path.join(os.getcwd(), "test_specimen", "fullSpec.mesh")
+displ_filepath = [os.path.join(os.getcwd(), "test_specimen", 
+                               f"fullSpec{i}.csv") for i in range(1, 6)]
 # displ_filepath = []
 
 
@@ -36,9 +33,9 @@ M = focal_length / (imaging_dist - focal_length)
 pixel_size = pixel_size_physical/M
 speckle_size = 4.0 * pixel_size
 output_DPI = 600
-n_samples = 50
+n_samples = 20
 
-# GENERATE SPECKLES
+#%% GENERATE SPECKLES
 pat1 = speckle.SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
 im1 = pat1.gen_pattern()
@@ -51,7 +48,7 @@ normals_map.pattern_gradient()
 normals_map.generate_norm_map(binary_map=pat1.gradient)
 normals_map.grad_save(normals_path)
 
-# Generate blender scene
+#%% Generate blender scene
 a = VirtExp(pattern_path, normals_path, output_path, model_path,
             objects_position="fixed")
 
@@ -74,6 +71,7 @@ a.add_light(p["light_type"], pos=p["light_pos"], orient=light_angle,
             energy=p["light_energy"], spot_size=p["light_spotsize"],
             spot_blend=p["light_spot_blend"],
             shadow_spot_size=p["light_shad_spot"])
+
 # CAMERAS
 # Add straight camera
 # Calculate desired orientation of the cam
@@ -94,29 +92,30 @@ cam1 = a.add_camera(pos=cam1_pos, orient=cam_angle,
                     fstop=p["cam_fstop"],
                     focal_length=p["cam_foc_length"],
                     obj_distance=cam1_target_dist)
-# Rotate cam1 around the z-axis (lens axis)
+# Rotate cameras around the z-axis (lens axis)
 #a.rotate_around_z(cam1, 0.5)
+#a.rotate_around_z(cam0, 0.5)
 
 # Material
 # Define the material and assign it to the cube
 a.add_material(target)
 
-# Render images
+#%% Render images
 # Write the calibration file
 a.generate_calib_file(cam0, cam1, calib_path)
 # Set the renderer up and render image
 a.set_renderer(cam0, n_samples=n_samples)
-# Add distortion to the model
-a.add_image_distortion(cam0)
 # Save the model
 a.save_model()
 # Render the scene with the perpendicular camera
 a.render_scene(output_path)
+# Add distortion to the model
+a.add_image_distortion(cam0, output_path)
 # Switch the camera to the cross one and render the scene
 a.set_renderer(cam1, n_samples=n_samples)
-# Add distortion to the model
-a.add_image_distortion(cam1)
 a.render_scene(output_path2)
+# Add distortion to the model
+a.add_image_distortion(cam1, output_path2)
 
 # Deform images
 for i, displ_file in enumerate(displ_filepath):
@@ -127,12 +126,12 @@ for i, displ_file in enumerate(displ_filepath):
     # Render the scene with the perpendicular camera
     def_path = os.path.join(output_folder, f"render_{i+1}_0.tiff")
     a.set_renderer(cam0, n_samples=n_samples)
-    a.add_image_distortion(cam0)
     a.render_scene(def_path)
+    a.add_image_distortion(cam0, def_path)
     # Switch the camera to the cross one and render the scene
     def_path = os.path.join(output_folder, f"render_{i+1}_1.tiff")
     a.set_renderer(cam1, n_samples=n_samples)
-    a.add_image_distortion(cam1)
     a.render_scene(def_path)
+    a.add_image_distortion(cam1, def_path)
 # Save final model
 a.save_model()
