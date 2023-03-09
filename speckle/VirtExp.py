@@ -124,6 +124,7 @@ class VirtExp:
         obj = bpy.data.objects.new("specimen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         part = bpy.data.objects["specimen"]
+        part["thickness"] = thickness
         # Add thickness to the mesh
         # Select the target and apply the material
         ob = bpy.context.view_layer.objects.active
@@ -559,8 +560,24 @@ class VirtExp:
                          for line in lines
                          if not line.startswith('*'))
         # Update the coordinates
+        # Save coordinates of the original layer of nodes
+        n_nodes_layer = int(len(part.data.vertices)/2) 
+        all_nodes = np.array([sk.data[i].co 
+                              for i in range(len(part.data.vertices))])
+        first_layer = all_nodes[0:n_nodes_layer, :]
+        # Currently faking the thickness of specimen so the back plane just 
+        # follows the front plane rigidly
         for i in range(len(part.data.vertices)):
-            sk.data[i].co = nodes[i]
+            if i < n_nodes_layer: # Original plane
+                sk.data[i].co = nodes[i]
+            else: # Solidified plane
+                # Find the closest node on the original plane
+                dist = np.linalg.norm(first_layer-sk.data[i].co, axis=1)
+                cn = np.argmin(dist)
+                # Apply the coordinates from the original layer
+                sk.data[i].co = nodes[cn]
+                # Correct for the thickness
+                sk.data[i].co[2] -= part["thickness"]
 
     def set_new_frame(self, obj):
         """
