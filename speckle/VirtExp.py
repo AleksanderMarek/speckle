@@ -125,8 +125,15 @@ class VirtExp:
         bpy.context.scene.collection.objects.link(obj)
         part = bpy.data.objects["specimen"]
         # Add thickness to the mesh
-        part.modifiers.new(name='solidify', type='SOLIDIFY')
-        part.modifiers["solidify"].thickness = thickness
+        # Select the target and apply the material
+        ob = bpy.context.view_layer.objects.active
+        if ob is None:
+            bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.solidify(thickness=thickness)
+        bpy.ops.object.editmode_toggle()
+        #part.modifiers.new(name='solidify', type='SOLIDIFY')
+        #part.modifiers["solidify"].thickness = thickness
         # Return the object
         self.objects.append(part)
         return part
@@ -338,6 +345,8 @@ class VirtExp:
         target.select_set(True)
         # Enter edit mode
         bpy.ops.object.editmode_toggle()
+        # Select all faces
+        bpy.ops.mesh.select_all(action='SELECT')
         # Project the mesh into a cube such that the specimen dimensions
         # fit the encoded physical speckles
 
