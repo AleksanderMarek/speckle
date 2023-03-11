@@ -112,10 +112,10 @@ class VirtExp:
                          for i, line in enumerate(lines)
                          if not line.startswith('*') and i < tag_lines[1])
             # Define elements and offset by 1 (blender starts with i=0)
-            elements = list((int(line.split(';')[1])-1,
-                             int(line.split(';')[2])-1,
-                             int(line.split(';')[3])-1,
-                             int(line.split(';')[4])-1)
+            # elements is a list of tuples containing node numbers for each 
+            # mesh element to be created in blender
+            elements = list(tuple(int(elem_num)-1 for k, elem_num in 
+                                  enumerate(line.split(';')) if k > 0)
                             for i, line in enumerate(lines)
                             if not line.startswith('*') and i > tag_lines[1])
         # Create mesh
