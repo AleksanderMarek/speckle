@@ -9,7 +9,10 @@ from speckle import VirtExp
 import speckle
 import os
 
-output_folder = r"D:\Experiment Quality\Correlation test\compliant_spec"
+# Define paths for output files
+output_folder = os.path.join(os.getcwd(), 'default_scene')
+if not os.path.exists(output_folder):
+    os.mkdir(output_folder)
 pattern_path = os.path.join(output_folder, "im.tiff")
 normals_path = os.path.join(output_folder, "grad.tiff")
 model_path = os.path.join(output_folder, "model.blend")

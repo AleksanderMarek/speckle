@@ -10,7 +10,10 @@ import speckle
 import numpy as np
 import os
 
-output_folder = r"D:\Experiment Quality\Correlation test\compliant_spec"
+# Define paths for output files
+output_folder = os.path.join(os.getcwd(), 'FEDEF_scene')
+if not os.path.exists(output_folder):
+    os.mkdir(output_folder)
 pattern_path = os.path.join(output_folder, "im.tiff")
 normals_path = os.path.join(output_folder, "grad.tiff")
 model_path = os.path.join(output_folder, "model.blend")
