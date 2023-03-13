@@ -78,7 +78,7 @@ class VirtExp:
         self.objects.append(part)
         return part
 
-    def add_FEA_part(self, part_filepath, thickness=0.002):
+    def add_FEA_part(self, part_filepath, thickness=0.002, solidify_flag=True):
         """
         This method imports a *.mesh file that contains information about FE
         nodes and elements to generate a part in blender. The mesh is then
@@ -124,17 +124,19 @@ class VirtExp:
         obj = bpy.data.objects.new("specimen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         part = bpy.data.objects["specimen"]
+        part["solidify"] = solidify_flag
         part["thickness"] = thickness
         # Add thickness to the mesh
-        # Select the target and apply the material
-        ob = bpy.context.view_layer.objects.active
-        if ob is None:
-            bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.mesh.solidify(thickness=thickness)
-        bpy.ops.object.editmode_toggle()
-        #part.modifiers.new(name='solidify', type='SOLIDIFY')
-        #part.modifiers["solidify"].thickness = thickness
+        if part["solidify"]:
+            # Select the target and apply the material
+            ob = bpy.context.view_layer.objects.active
+            if ob is None:
+                bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.editmode_toggle()
+            bpy.ops.mesh.solidify(thickness=thickness)
+            bpy.ops.object.editmode_toggle()
+            #part.modifiers.new(name='solidify', type='SOLIDIFY')
+            #part.modifiers["solidify"].thickness = thickness
         # Return the object
         self.objects.append(part)
         return part
@@ -561,7 +563,12 @@ class VirtExp:
                          if not line.startswith('*'))
         # Update the coordinates
         # Save coordinates of the original layer of nodes
-        n_nodes_layer = int(len(part.data.vertices)/2) 
+        # TODO: SOLIDIFY Deformation will only work for 
+        # 2D specimen at the moment
+        if part["solidify"]:
+            n_nodes_layer = int(len(part.data.vertices)/2) 
+        else:
+            n_nodes_layer = int(len(part.data.vertices)) 
         all_nodes = np.array([sk.data[i].co 
                               for i in range(len(part.data.vertices))])
         first_layer = all_nodes[0:n_nodes_layer, :]
