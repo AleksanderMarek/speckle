@@ -43,6 +43,10 @@ installation is needed. Blender can be found at: https://www.blender.org/
 
 # Using the library
 
+For more details regarding the project, please visit the wiki pages:
+https://github.com/AleksanderMarek/speckle/wiki that will be gradually 
+updated with more information.
+
 ## Speckle module
 This module generate a random speckle pattern of given image size (in pixels), 
 and speckle size (also in pixels). It is possible to set the image such that
