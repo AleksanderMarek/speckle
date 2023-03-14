@@ -141,6 +141,29 @@ class VirtExp:
         self.objects.append(part)
         return part
 
+    def add_stl_part(self, path, position=(0, 0, 0), rotation=(1, 0, 0, 0),
+                     scale=1.0):
+        """
+        This method imports and *.stl file and adds it to the scene. It 
+        allows to control the position and orientation of the created part
+        and returns a handle to the blender object
+        
+        NOTE: Default units of blender are 'm' so the stl should be saved 
+        with such unit embedded, or alternatively the scale can be set to
+        0.001
+        """
+        # Add the stl model to the scene
+        bpy.ops.import_mesh.stl(filepath=path,
+                                global_scale=scale, use_scene_unit=False,
+                                axis_forward='Y', axis_up='Z')
+        # Get the handle of the imported object
+        part = bpy.context.selected_objects[0]
+        # Set the position and orientation of the object
+        part.location = position
+        part.rotation_mode = 'QUATERNION'
+        part.rotation_quaternion = rotation
+        return part
+
     # ADDING ELEMENTS TO THE SCENE
     def add_light(self, light_type, pos=(0, 0, 0), orient=(1, 0, 0, 0),
                   energy=0, spot_size=0, spot_blend=0, shadow_spot_size=0):
