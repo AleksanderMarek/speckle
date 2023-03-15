@@ -4,7 +4,8 @@ The scene consists of a plate target and two cameras, the first one
 is positioned perpendicularly to the target while the other is positioned
 at an angle of 15 degrees to the target
 """
-
+import sys
+sys.path.append('..')
 from speckle import VirtExp
 import speckle
 import os
