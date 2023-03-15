@@ -105,7 +105,8 @@ class VirtExp:
                          if line.startswith('*Node')
                          or line.startswith('*Element')]
             # Define vertices + scale to mm
-            # MatchID rotates the mesh by 180 deg
+            # MatchID rotates the mesh by 180 deg around x-axis
+            # TODO: Rotate the coordinate point properly
             nodes = list((float(line.split(';')[1]) * (-0.001),
                           float(line.split(';')[2]) * (-0.001),
                           float(line.split(';')[3]) * 0.001)
