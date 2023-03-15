@@ -42,6 +42,8 @@ bpy module is sufficient to produce images with this library, however if one
 wanted to inspect/adjust the blender scene in a GUI, a separate blender 
 installation is needed. Blender can be found at: https://www.blender.org/
 
+NOTE: Currently using blender 3.4.0, which is compatible with python 3.10.x
+
 # Using the library
 
 For more details regarding the project, please visit the wiki pages:
