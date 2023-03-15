@@ -125,6 +125,7 @@ class VirtExp:
         obj = bpy.data.objects.new("specimen", mesh)
         bpy.context.scene.collection.objects.link(obj)
         part = bpy.data.objects["specimen"]
+        part.rotation_mode = 'QUATERNION'
         part["solidify"] = solidify_flag
         part["thickness"] = thickness
         # Add thickness to the mesh
