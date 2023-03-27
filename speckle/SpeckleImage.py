@@ -83,7 +83,7 @@ class SpeckleImage:
         # Adjust histogram and binarize the result
         speckle_im = (speckle_im-np.min(speckle_im)) \
                      / (np.max(speckle_im)-np.min(speckle_im))
-        self.pattern = (np.where(speckle_im > self.bin_threshold,
+        self.pattern = (np.where(speckle_im > self.binary_threshold,
                                 self.binarised_high, 
                                 self.binarised_low)*255).astype('uint8')
         if self.noise_mag is not None:
