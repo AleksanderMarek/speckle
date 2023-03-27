@@ -775,15 +775,15 @@ class VirtExp:
         # Random
         elif self.objects_position == "random":
             # Control parameters
-            polar_ang_variation = 60
-            azim_ang_variation = 30
-            spot_dist_mean = 0.5
-            spot_dist_variation = 0.2
+            polar_ang_variation = 75
+            azim_ang_variation = 45
+            spot_dist_mean = 1.0
+            spot_dist_variation = 0.5
             target_range = 0.075
-            spot_energy_mean = 12.0
-            spot_energy_variation = 4.0
-            spot_ang_mean = 35.0
-            spot_ang_variation = 10.0
+            spot_energy_mean = 17.5
+            spot_energy_variation = 5.0
+            spot_ang_mean = 45.0
+            spot_ang_variation = 15.0
             spot_size_min = 0.0
             spot_size_max = 0.01
             cam1_dist_mean = 1.0
@@ -793,9 +793,9 @@ class VirtExp:
             cam1_target_variation = 0.03
             fstop_min = 4.0
             fstop_max = 11.0
-            specular_strength_mean = 0.4
+            specular_strength_mean = 0.3
             specular_strength_std = 0.2
-            shader_mix_ratio_min = 0.4
+            shader_mix_ratio_min = 0.5
             shader_mix_ratio_max = 0.95
             # Position of the spotlight
             polar_ang = math.radians(random.uniform(-1, 1) * polar_ang_variation)
@@ -813,8 +813,8 @@ class VirtExp:
             )
             # Light energy
             light_energy = random.normalvariate(spot_energy_mean, spot_energy_variation)
-            if light_energy <= 0:
-                light_energy = 1.0
+            while light_energy <= 0:
+                light_energy = random.normalvariate(1, 0.2)
             props["light_energy"] = light_energy
 
             # Spot size
