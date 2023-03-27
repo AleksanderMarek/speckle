@@ -19,13 +19,14 @@ class SpeckleImage:
     # Constructor
     def __init__(self, image_size, speckle_size, algorithm='optim', 
                  DPI=450, binary_high=1.0, binary_low=0.0, noise_mag=None,
-                 normal_map_filter=3):
+                 normal_map_filter=3, bin_threshold=0.5):
         image_size = tuple(tuple(map(int, image_size)))
         self.image_size = image_size
         self.speckle_size = speckle_size
         self.algorithm = algorithm
         self.pattern = None
         self.DPI = DPI
+        self.binary_threshold = bin_threshold
         self.binarised_high = binary_high
         self.binarised_low = binary_low
         self.noise_mag = noise_mag
@@ -82,7 +83,7 @@ class SpeckleImage:
         # Adjust histogram and binarize the result
         speckle_im = (speckle_im-np.min(speckle_im)) \
                      / (np.max(speckle_im)-np.min(speckle_im))
-        self.pattern = (np.where(speckle_im > 0.5,
+        self.pattern = (np.where(speckle_im > self.bin_threshold,
                                 self.binarised_high, 
                                 self.binarised_low)*255).astype('uint8')
         if self.noise_mag is not None:
