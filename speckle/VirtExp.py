@@ -870,7 +870,22 @@ class VirtExp:
         rot_axis = np.insert(rot_axis, 0, 1 + np.dot(dir1, dir2))
         # Normalise the quaternion
         rot_axis /= np.linalg.norm(rot_axis)
+        # Orientation vector will be colinear with the desired direction but
+        # It might be poiting the opposite way. Check it with the dot product
+        rotated_dir1 = self.rotate_vec(dir1, self.quaternion_conjugate(rot_axis))
+        # Check if the dp is (-1) with some tolerance
+        if np.abs(np.dot(rotated_dir1, dir2) + 1) < 1e-3:
+            # Add another 180 deg rotation to the quaternion
+            # This is in quaternion: [0, x, y, z] of the original rotation quat
+            rot_axis = self.quaternion_multiply(
+                rot_axis, np.array(np.concatenate(([0], rot_axis[1:]), axis=0))
+            )
+            # If the direction coincides with z axis and the quaternion zeros
+            # then replace it with a 180 deg rotation around x-axis
+            if np.linalg.norm(rot_axis) == 0:
+                rot_axis = np.array([0, 1, 0, 0])
         rot_quat = mathutils.Quaternion(rot_axis)
+
         return rot_quat
 
     def quaternion_multiply(self, q0, q1):
