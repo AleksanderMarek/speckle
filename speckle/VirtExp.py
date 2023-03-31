@@ -86,7 +86,14 @@ class VirtExp:
         self.objects.append(part)
         return part
 
-    def add_FEA_part(self, part_filepath, thickness=0.002, solidify_flag=True):
+    def add_FEA_part(
+        self,
+        part_filepath,
+        thickness=0.002,
+        solidify_flag=True,
+        position=(0, 0, 0),
+        rotation=(1, 0, 0, 0),
+    ):
         """
         This method imports a *.mesh file that contains information about FE
         nodes and elements to generate a part in blender. The mesh is then
@@ -158,6 +165,10 @@ class VirtExp:
             bpy.ops.object.editmode_toggle()
             # part.modifiers.new(name='solidify', type='SOLIDIFY')
             # part.modifiers["solidify"].thickness = thickness
+        # Move and rotate the object
+        part.location = position
+        part.rotation_mode = "QUATERNION"
+        part.rotation_quaternion = rotation
         # Return the object
         self.objects.append(part)
         return part
