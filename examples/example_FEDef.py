@@ -5,14 +5,15 @@ is positioned perpendicularly to the target while the other is positioned
 at an angle of 15 degrees to the target
 """
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 from speckle import VirtExp
 import speckle
 import numpy as np
 import os
 
 # Define paths for output files
-output_folder = os.path.join(os.getcwd(), 'FEDEF_scene')
+output_folder = os.path.join(os.getcwd(), "FEDEF_scene")
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 pattern_path = os.path.join(output_folder, "im.tiff")
@@ -22,8 +23,9 @@ output_path = os.path.join(output_folder, "render_0_0.tiff")
 output_path2 = os.path.join(output_folder, "render_0_1.tiff")
 calib_path = os.path.join(output_folder, "calibration.caldat")
 mesh_path = os.path.join(os.getcwd(), "test_specimen", "fullSpec.mesh")
-displ_filepath = [os.path.join(os.getcwd(), "test_specimen",
-                               f"fullSpec{i}.csv") for i in range(1, 6)]
+displ_filepath = [
+    os.path.join(os.getcwd(), "test_specimen", f"fullSpec{i}.csv") for i in range(1, 6)
+]
 # displ_filepath = []
 
 
@@ -34,7 +36,7 @@ pixel_size_physical = 0.00345  # mm
 imaging_dist = 1000
 focal_length = 50
 M = focal_length / (imaging_dist - focal_length)
-pixel_size = pixel_size_physical/M
+pixel_size = pixel_size_physical / M
 speckle_size = 4.0 * pixel_size
 output_DPI = 600
 n_samples = 20
@@ -53,8 +55,9 @@ normals_map.generate_norm_map(binary_map=pat1.gradient)
 normals_map.grad_save(normals_path)
 
 #%% Generate blender scene
-a = VirtExp(pattern_path, normals_path, output_path, model_path,
-            objects_position="fixed")
+a = VirtExp(
+    pattern_path, normals_path, output_path, model_path, objects_position="fixed"
+)
 
 # Set up the scene
 # Get default properties
@@ -64,41 +67,51 @@ p = a.get_default_params()
 # Add the default target
 target = a.add_FEA_part(mesh_path)
 
-#LIGHT
+# LIGHT
 # Add the light panel
 # Calculate desired orientation of the light
 light_target_orient = p["light_target"] - np.array(p["light_pos"])
 # Calculate the rotation angle of the light
-light_angle = a.calc_rot_angle(p["light_init_rot"],
-                               light_target_orient)
-a.add_light(p["light_type"], pos=p["light_pos"], orient=light_angle,
-            energy=p["light_energy"], spot_size=p["light_spotsize"],
-            spot_blend=p["light_spot_blend"],
-            shadow_spot_size=p["light_shad_spot"])
+light_angle = a.calc_rot_angle(p["light_init_rot"], light_target_orient)
+a.add_light(
+    p["light_type"],
+    pos=p["light_pos"],
+    orient=light_angle,
+    energy=p["light_energy"],
+    spot_size=p["light_spotsize"],
+    spot_blend=p["light_spot_blend"],
+    shadow_spot_size=p["light_shad_spot"],
+)
 
 # CAMERAS
 # Add straight camera
 # Calculate desired orientation of the cam
 cam0_pos = p["cam0_pos"]
 cam0_target_orient = p["cam0_target"] - cam0_pos
-cam0_target_dist = np.linalg.norm(cam0_target_orient)+1e-16
+cam0_target_dist = np.linalg.norm(cam0_target_orient) + 1e-16
 cam_angle = a.calc_rot_angle(p["cam_init_rot"], cam0_target_orient)
-cam0 = a.add_camera(pos=cam0_pos, orient=cam_angle,
-                    fstop=p["cam_fstop"],
-                    focal_length=p["cam_foc_length"],
-                    obj_distance=cam0_target_dist)
+cam0 = a.add_camera(
+    pos=cam0_pos,
+    orient=cam_angle,
+    fstop=p["cam_fstop"],
+    focal_length=p["cam_foc_length"],
+    obj_distance=cam0_target_dist,
+)
 # Add cross camera
 cam1_pos = p["cam1_pos"]
 cam1_target_orient = p["cam1_target"] - cam1_pos
-cam1_target_dist = np.linalg.norm(cam1_target_orient)+1e-16
+cam1_target_dist = np.linalg.norm(cam1_target_orient) + 1e-16
 cam_angle = a.calc_rot_angle(p["cam_init_rot"], cam1_target_orient)
-cam1 = a.add_camera(pos=cam1_pos, orient=cam_angle,
-                    fstop=p["cam_fstop"],
-                    focal_length=p["cam_foc_length"],
-                    obj_distance=cam1_target_dist)
+cam1 = a.add_camera(
+    pos=cam1_pos,
+    orient=cam_angle,
+    fstop=p["cam_fstop"],
+    focal_length=p["cam_foc_length"],
+    obj_distance=cam1_target_dist,
+)
 # Rotate cameras around the z-axis (lens axis)
-#a.rotate_around_z(cam1, 0.5)
-#a.rotate_around_z(cam0, 0.5)
+# a.rotate_around_z(cam1, 0.5)
+# a.rotate_around_z(cam0, 0.5)
 
 # Material
 # Define the material and assign it to the cube
