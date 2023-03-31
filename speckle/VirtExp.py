@@ -781,8 +781,8 @@ class VirtExp:
             )
             props["cam_fstop"] = 8.0
             props["cam1_target"] = np.array([0.0, 0.0, 0.0])
-            props["specular_strength"] = 1.0
-            props["shader_mix"] = 0.7
+            props["specular_strength"] = 0.5
+            props["shader_mix"] = 0.95
         # Random
         elif self.objects_position == "random":
             # Control parameters
