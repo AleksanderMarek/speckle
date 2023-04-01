@@ -345,9 +345,9 @@ class VirtExp:
         self,
         target,
         glossy_roughness=0.2,
-        specular_strength=1.0,
+        specular_strength=0.5,
         diffuse_roughness=0.2,
-        shader_mix_ratio=0.7,
+        shader_mix_ratio=0.95,
     ):
         """
         Method to define a new material and add it to the selected object
@@ -441,6 +441,22 @@ class VirtExp:
         )
         bpy.ops.object.editmode_toggle()
         # Add the material to the list
+        self.materials.append(mat)
+        return mat
+
+    # Set a color of an object
+    def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0)):
+        # Make a new material
+        mat = bpy.data.materials.new(name="Material")
+        mat.use_nodes = True
+        mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = color
+        # Select the target and apply the material
+        ob = bpy.context.view_layer.objects.active
+        if ob is None:
+            bpy.context.view_layer.objects.active = target
+        # Assign the material to the cube
+        target.data.materials.append(mat)
+        target.select_set(True)
         self.materials.append(mat)
         return mat
 
