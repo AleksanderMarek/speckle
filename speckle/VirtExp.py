@@ -24,7 +24,7 @@ class VirtExp:
         self,
         pattern_path,
         normal_map_path,
-        output_path=None,
+        output_path="",
         model_path=None,
         objects_position="fixed",
     ):
