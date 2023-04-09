@@ -76,12 +76,13 @@ class VirtExp:
         # Create mesh
         mesh = bpy.data.meshes.new("part")
         mesh.from_pydata(nodes, [], elements)
-        obj = bpy.data.objects.new("specimen", mesh)
-        bpy.context.scene.collection.objects.link(obj)
-        part = bpy.data.objects["specimen"]
+        part = bpy.data.objects.new("specimen", mesh)
+        bpy.context.scene.collection.objects.link(part)
         # Add thickness to the mesh
         part.modifiers.new(name="solidify", type="SOLIDIFY")
         part.modifiers["solidify"].thickness = thickness
+        # Deselect object
+        part.select_set(False)
         # Return the object
         self.objects.append(part)
         return part
@@ -119,8 +120,12 @@ class VirtExp:
             tag_lines = [
                 i
                 for i, line in enumerate(lines)
-                if line.startswith("*Node") or line.startswith("*Element")
+                if line.startswith("*Node")
+                or line.startswith("*Element")
+                or line.startswith("*ROI_Elems")
             ]
+            if len(tag_lines) == 2:  # No *ROI_Elems
+                tag_lines.append(i + 1)
             # Define vertices + scale to mm
             # MatchID rotates the mesh by 180 deg around x-axis
             # TODO: Rotate the coordinate point properly
@@ -143,8 +148,12 @@ class VirtExp:
                     if k > 0
                 )
                 for i, line in enumerate(lines)
-                if not line.startswith("*") and i > tag_lines[1]
+                if not line.startswith("*") and i > tag_lines[1] and i < tag_lines[2]
             )
+            ROI_elems = []
+            for i, line in enumerate(lines):
+                if not line.startswith("*") and i > tag_lines[2]:
+                    ROI_elems.extend([int(elem_num) for elem_num in line.split(";")])
         # Create mesh
         mesh = bpy.data.meshes.new("part")
         mesh.from_pydata(nodes, [], elements)
@@ -170,6 +179,8 @@ class VirtExp:
         part.rotation_quaternion = rotation
         # Return the object
         self.objects.append(part)
+        # Save ROI
+        self.ROI_set = ROI_elems
         return part
 
     def add_stl_part(self, path, position=(0, 0, 0), rotation=(1, 0, 0, 0), scale=1.0):
@@ -464,6 +475,60 @@ class VirtExp:
         # Add the material to the list
         self.materials.append(mat)
         return mat
+
+    def apply_speckle_ROI(self, obj):
+        # Deselect all objects and select the one to modify
+        bpy.ops.object.select_all(action="DESELECT")
+        mesh = obj.data
+        obj.select_set(True)
+
+        # TODO: Change unwrapping to standard unwrapping and figure out the scaling
+        # Unwrap
+        # bpy.ops.object.editmode_toggle()
+        # bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+        #
+        # Calculate the area of an unwrapped polygon in physical space
+        # vert_idx = mesh.polygons[0].vertices
+        # vec1 = np.array([i - j for i, j in zip(mesh.vertices[vert_idx[1]].co, mesh.vertices[vert_idx[0]].co)])
+        # vec2 = np.array([i - j for i, j in zip(mesh.vertices[vert_idx[-1]].co, mesh.vertices[vert_idx[0]].co)])
+        # area_phys = 0.5 * np.linalg.norm(np.cross(vec1, vec2))
+        #
+        # # Calc area of the polygon in UV map
+        # bpy.ops.object.editmode_toggle()
+        # loop_idx = mesh.polygons[0].loop_indices
+        # vec1 = np.array([i - j for i, j in zip(uv_map[loop_idx[1]].uv, uv_map[loop_idx[0]].uv)])
+        # vec2 = np.array([i - j for i, j in zip(uv_map[loop_idx[-1]].uv, uv_map[loop_idx[0]].uv)])
+        # # Scale from relative dist to pix and then to m
+        # im = bpy.data.images[-1]
+        # vec1[0] *= im.size[0]
+        # vec1[1] *= im.size[1]
+        # vec2[0] *= im.size[0]
+        # vec2[1] *= im.size[1]
+        # area_im = 0.5 * np.linalg.norm(np.cross(vec1, vec2)) / im.resolution[0] / im.resolution[1]
+
+        # Scale the UV_map!!
+        # scale_fac = 0.25 * area_phys / area_im # Why 0.25?
+        # for uv_node in uv_map:
+        #     uv_node.uv[0] *= scale_fac
+        #     uv_node.uv[1] *= scale_fac
+
+        # Add a new material and assign it to the faces not in ROI zone
+        # Make a new material
+        mat2 = bpy.data.materials.new(name="Material")
+        mat2.use_nodes = True
+        mat2.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (
+            0.05,
+            0.05,
+            0.05,
+            1.0,
+        )
+
+        # Select all faces not in ROI and set material_index to 1 more than current max
+        for idx, face in enumerate(mesh.polygons):
+            if idx not in self.ROI_set:
+                face.material_index = len(obj.data.materials)
+        # Add a new material to the object
+        obj.data.materials.append(mat2)
 
     # Set a color of an object
     def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0)):
