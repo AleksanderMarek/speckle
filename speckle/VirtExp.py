@@ -148,9 +148,8 @@ class VirtExp:
         # Create mesh
         mesh = bpy.data.meshes.new("part")
         mesh.from_pydata(nodes, [], elements)
-        obj = bpy.data.objects.new("specimen", mesh)
-        bpy.context.scene.collection.objects.link(obj)
-        part = bpy.data.objects["specimen"]
+        part = bpy.data.objects.new("specimen", mesh)
+        bpy.context.scene.collection.objects.link(part)
         part.rotation_mode = "QUATERNION"
         part["solidify"] = solidify_flag
         part["thickness"] = thickness
@@ -198,6 +197,28 @@ class VirtExp:
         part.rotation_mode = "QUATERNION"
         part.rotation_quaternion = rotation
         return part
+
+    def add_obj_part(self, path, position=(0, 0, 0), rotation=(1, 0, 0, 0), scale=1.0):
+        bpy.ops.import_scene.obj(
+            filepath=path,
+        )
+        # Get the handle of the imported object
+        part = bpy.context.selected_objects[0]
+        part.scale[0] = scale
+        part.scale[1] = scale
+        part.scale[2] = scale
+        # Set the position and orientation of the object
+        part.location = position
+        part.rotation_mode = "QUATERNION"
+        part.rotation_quaternion = rotation
+        return part
+
+    def add_global_light(self, intensity=1.0):
+        bpy.ops.world.new()
+        bpy.context.scene.world = bpy.data.worlds["World"]
+        world_light = bpy.data.worlds["World"].node_tree.nodes["Background"]
+        world_light.inputs[0].default_value = (0.5, 0.5, 0.5, 1)
+        world_light.inputs[1].default_value = intensity
 
     # ADDING ELEMENTS TO THE SCENE
     def add_light(
