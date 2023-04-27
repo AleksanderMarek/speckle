@@ -167,7 +167,7 @@ class VirtExp:
             # Select the target and apply the material
             ob = bpy.context.view_layer.objects.active
             if ob is None:
-                bpy.context.view_layer.objects.active = obj
+                bpy.context.view_layer.objects.active = ob
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.solidify(thickness=thickness)
             bpy.ops.object.editmode_toggle()
