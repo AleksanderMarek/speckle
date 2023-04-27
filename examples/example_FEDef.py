@@ -4,16 +4,12 @@ The scene consists of a plate target and two cameras, the first one
 is positioned perpendicularly to the target while the other is positioned
 at an angle of 15 degrees to the target
 """
-import sys
-
-sys.path.append("..")
-from speckle import VirtExp
-import speckle
+from speckle import VirtExp, SpeckleImage
 import numpy as np
 import os
 
 # Define paths for output files
-output_folder = os.path.join(os.getcwd(), "FEDEF_scene")
+output_folder = os.path.join(os.getcwd(), "examples", "FEDEF_scene")
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 pattern_path = os.path.join(output_folder, "im.tiff")
@@ -42,13 +38,13 @@ output_DPI = 600
 n_samples = 20
 
 #%% GENERATE SPECKLES
-pat1 = speckle.SpeckleImage(image_size, speckle_size)
+pat1 = SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
 im1 = pat1.gen_pattern()
 pat1.pattern_gradient()
 pat1.im_save(pattern_path)
 # Generate normals map
-normals_map = speckle.SpeckleImage(pat1.image_size, 60, normal_map_filter=1)
+normals_map = SpeckleImage(pat1.image_size, 60, normal_map_filter=1)
 normals_map.gen_pattern()
 normals_map.pattern_gradient()
 normals_map.generate_norm_map(binary_map=pat1.gradient)

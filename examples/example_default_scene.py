@@ -4,14 +4,12 @@ The scene consists of a plate target and two cameras, the first one
 is positioned perpendicularly to the target while the other is positioned
 at an angle of 15 degrees to the target
 """
-import sys
-sys.path.append('..')
-from speckle import VirtExp
-import speckle
+
+from speckle import VirtExp, SpeckleImage
 import os
 
 # Define paths for output files
-output_folder = os.path.join(os.getcwd(), 'default_scene')
+output_folder = os.path.join(os.getcwd(), "examples", "default_scene")
 if not os.path.exists(output_folder):
     os.mkdir(output_folder)
 pattern_path = os.path.join(output_folder, "im.tiff")
@@ -29,7 +27,7 @@ pixel_size_physical = 0.00345  # mm / Manta G504-b
 imaging_dist = 1000  # mm / distance from the camera to the target
 focal_length = 50  # mm
 # Calculate magnification
-M = focal_length / (imaging_dist - focal_length)
+M = focal_length / imaging_dist
 # Get mm to pix ratio in the image
 pixel_size = pixel_size_physical/M
 # Generate speckle size whose physical size is around 4 pixels
@@ -38,13 +36,13 @@ speckle_size = 4.0 * pixel_size
 output_DPI = 600
 
 # %% Generate speckle pattern
-pat1 = speckle.SpeckleImage(image_size, speckle_size)
+pat1 = SpeckleImage(image_size, speckle_size)
 pat1.set_physical_dim(target_size, speckle_size, output_DPI)
 im1 = pat1.gen_pattern()
 pat1.pattern_gradient()
 pat1.im_save(pattern_path)
 # Generate normals map
-normals_map = speckle.SpeckleImage(pat1.image_size, 60, normal_map_filter=1)
+normals_map = SpeckleImage(pat1.image_size, 60, normal_map_filter=1)
 normals_map.gen_pattern()
 normals_map.pattern_gradient()
 normals_map.generate_norm_map(binary_map=pat1.gradient)
@@ -57,14 +55,14 @@ a = VirtExp(pattern_path, normals_path, output_path, model_path,
 a.create_def_scene()
 cam0 = a.cameras[0]
 cam1 = a.cameras[1]
-# Render the scene with the perpendicular camera
-a.render_scene()
-a.add_image_distortion(cam0, output_path)
-# Switch the camera to the cross one and render the scene
-a.set_renderer(cam1)
-a.render_scene(output_path2)
-a.add_image_distortion(cam1, output_path2)
-# Write the calibration file
-a.generate_calib_file(cam0, cam1, calib_path)
-# Save the model to *.blend file for inspection
-a.save_model()
+# # Render the scene with the perpendicular camera
+# a.render_scene()
+# a.add_image_distortion(cam0, output_path)
+# # Switch the camera to the cross one and render the scene
+# a.set_renderer(cam1)
+# a.render_scene(output_path2)
+# a.add_image_distortion(cam1, output_path2)
+# # Write the calibration file
+# a.generate_calib_file(cam0, cam1, calib_path)
+# # Save the model to *.blend file for inspection
+# a.save_model()
