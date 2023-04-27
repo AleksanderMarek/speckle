@@ -98,7 +98,12 @@ class VirtExp:
         """
         This method imports a *.mesh file that contains information about FE
         nodes and elements to generate a part in blender. The mesh is then
-        extruded to give some thickness to the part
+        extruded to give some thickness to the part. The .mesh file can
+        contain additional set (*ROI_Elems) only to which speckle pattern will
+        be applied. This set consists of element numbers (as defined
+        in *Element section), to which speckle pattern should be applied. 
+        By default speckles are applied to the entire part, and later unwanted
+        parts can be removed with `apply_speckle_ROI` method
 
         Parameters
         ----------
@@ -488,6 +493,16 @@ class VirtExp:
             1.0,
         ),
     ):
+        """
+        This method removes speckle textures from the object according to 
+        the elements that are specified in ROI_set (these elements will
+        continue to have speckle pattern). The remaining elements have
+        a uniform color applied to them, as defined by color variable
+
+        inputs:
+        obj - Blender part to which apply material transformation
+        color - tuple representing a color vector (r, g, b, a)
+        """
         # Deselect all objects and select the one to modify
         bpy.ops.object.select_all(action="DESELECT")
         mesh = obj.data
@@ -508,6 +523,15 @@ class VirtExp:
 
     # Set a color of an object
     def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0)):
+        """ [summary]
+        Applies uniform color to the entire object
+
+        ### Parameters
+        1. target : bpy_types.Object
+         - The part which color is to be set
+        2. color : tuple
+         - color specified by tuple of (r, g, b, a)
+        """
         # Make a new material
         mat = bpy.data.materials.new(name="Material")
         mat.use_nodes = True
@@ -1084,4 +1108,11 @@ class VirtExp:
 
     # Method to remove an object from the scene
     def remove_object(self, obj):
+        """Removes the object from the scene
+
+        Parameters
+        ----------
+        obj : _type_
+            _description_
+        """
         bpy.data.objects.remove(obj, do_unlink=True, do_id_user=True, do_ui_user=True)
