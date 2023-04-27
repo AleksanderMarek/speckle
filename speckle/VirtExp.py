@@ -419,14 +419,14 @@ class VirtExp:
         texImage = tree.nodes.new("ShaderNodeTexImage")
         texImage.location = (-825, 63)
         texImage.image = bpy.data.images.load(self.pattern_path)
-        bpy.data.images[0].colorspace_settings.name = "Non-Color"
-        bpy.data.images[0].interpolation = interpolant
+        texImage.image.colorspace_settings.name = "Non-Color"
+        texImage.interpolation = interpolant
         tree.links.new(bsdf_glossy.inputs["Color"], texImage.outputs["Color"])
         # Read an image to serve as a normals map for the specular reflection
         norm_image = tree.nodes.new("ShaderNodeTexImage")
         norm_image.location = (-825, 373)
         norm_image.image = bpy.data.images.load(self.normal_map_path)
-        bpy.data.images[0].colorspace_settings.name = "Non-Color"
+        norm_image.image.colorspace_settings.name = "Non-Color"
         norm_map = tree.nodes.new("ShaderNodeNormalMap")
         norm_map.location = (-525, 425)
         norm_map.inputs[0].default_value = specular_strength
