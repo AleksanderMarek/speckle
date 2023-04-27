@@ -76,12 +76,13 @@ class VirtExp:
         # Create mesh
         mesh = bpy.data.meshes.new("part")
         mesh.from_pydata(nodes, [], elements)
-        obj = bpy.data.objects.new("specimen", mesh)
-        bpy.context.scene.collection.objects.link(obj)
-        part = bpy.data.objects["specimen"]
+        part = bpy.data.objects.new("specimen", mesh)
+        bpy.context.scene.collection.objects.link(part)
         # Add thickness to the mesh
         part.modifiers.new(name="solidify", type="SOLIDIFY")
         part.modifiers["solidify"].thickness = thickness
+        # Deselect object
+        part.select_set(False)
         # Return the object
         self.objects.append(part)
         return part
@@ -97,7 +98,12 @@ class VirtExp:
         """
         This method imports a *.mesh file that contains information about FE
         nodes and elements to generate a part in blender. The mesh is then
-        extruded to give some thickness to the part
+        extruded to give some thickness to the part. The .mesh file can
+        contain additional set (*ROI_Elems) only to which speckle pattern will
+        be applied. This set consists of element numbers (as defined
+        in *Element section), to which speckle pattern should be applied. 
+        By default speckles are applied to the entire part, and later unwanted
+        parts can be removed with `apply_speckle_ROI` method
 
         Parameters
         ----------
@@ -119,8 +125,12 @@ class VirtExp:
             tag_lines = [
                 i
                 for i, line in enumerate(lines)
-                if line.startswith("*Node") or line.startswith("*Element")
+                if line.startswith("*Node")
+                or line.startswith("*Element")
+                or line.startswith("*ROI_Elems")
             ]
+            if len(tag_lines) == 2:  # No *ROI_Elems
+                tag_lines.append(len(lines) + 1)
             # Define vertices + scale to mm
             # MatchID rotates the mesh by 180 deg around x-axis
             # TODO: Rotate the coordinate point properly
@@ -143,8 +153,12 @@ class VirtExp:
                     if k > 0
                 )
                 for i, line in enumerate(lines)
-                if not line.startswith("*") and i > tag_lines[1]
+                if not line.startswith("*") and i > tag_lines[1] and i < tag_lines[2]
             )
+            ROI_elems = []
+            for i, line in enumerate(lines):
+                if not line.startswith("*") and i > tag_lines[2]:
+                    ROI_elems.extend([int(elem_num) for elem_num in line.split(";")])
         # Create mesh
         mesh = bpy.data.meshes.new("part")
         mesh.from_pydata(nodes, [], elements)
@@ -158,7 +172,7 @@ class VirtExp:
             # Select the target and apply the material
             ob = bpy.context.view_layer.objects.active
             if ob is None:
-                bpy.context.view_layer.objects.active = obj
+                bpy.context.view_layer.objects.active = part
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.solidify(thickness=thickness)
             bpy.ops.object.editmode_toggle()
@@ -170,6 +184,8 @@ class VirtExp:
         part.rotation_quaternion = rotation
         # Return the object
         self.objects.append(part)
+        # Save ROI
+        self.ROI_set = ROI_elems
         return part
 
     def add_stl_part(self, path, position=(0, 0, 0), rotation=(1, 0, 0, 0), scale=1.0):
@@ -369,6 +385,7 @@ class VirtExp:
         specular_strength=0.5,
         diffuse_roughness=0.2,
         shader_mix_ratio=0.95,
+        interpolant = 'Cubic',
     ):
         """
         Method to define a new material and add it to the selected object
@@ -407,13 +424,14 @@ class VirtExp:
         texImage = tree.nodes.new("ShaderNodeTexImage")
         texImage.location = (-825, 63)
         texImage.image = bpy.data.images.load(self.pattern_path)
-        bpy.data.images[0].colorspace_settings.name = "Non-Color"
+        texImage.image.colorspace_settings.name = "Non-Color"
+        texImage.interpolation = interpolant
         tree.links.new(bsdf_glossy.inputs["Color"], texImage.outputs["Color"])
         # Read an image to serve as a normals map for the specular reflection
         norm_image = tree.nodes.new("ShaderNodeTexImage")
         norm_image.location = (-825, 373)
         norm_image.image = bpy.data.images.load(self.normal_map_path)
-        bpy.data.images[0].colorspace_settings.name = "Non-Color"
+        norm_image.image.colorspace_settings.name = "Non-Color"
         norm_map = tree.nodes.new("ShaderNodeNormalMap")
         norm_map.location = (-525, 425)
         norm_map.inputs[0].default_value = specular_strength
@@ -465,8 +483,55 @@ class VirtExp:
         self.materials.append(mat)
         return mat
 
+    def apply_speckle_ROI(
+        self,
+        obj,
+        color=(
+            0.05,
+            0.05,
+            0.05,
+            1.0,
+        ),
+    ):
+        """
+        This method removes speckle textures from the object according to 
+        the elements that are specified in ROI_set (these elements will
+        continue to have speckle pattern). The remaining elements have
+        a uniform color applied to them, as defined by color variable
+
+        inputs:
+        obj - Blender part to which apply material transformation
+        color - tuple representing a color vector (r, g, b, a)
+        """
+        # Deselect all objects and select the one to modify
+        bpy.ops.object.select_all(action="DESELECT")
+        mesh = obj.data
+        obj.select_set(True)
+
+        # Add a new material and assign it to the faces not in ROI zone
+        # Make a new material
+        mat2 = bpy.data.materials.new(name="Material")
+        mat2.use_nodes = True
+        mat2.node_tree.nodes["Principled BSDF"].inputs[0].default_value = color
+
+        # Select all faces not in ROI and set material_index to 1 more than current max
+        for idx, face in enumerate(mesh.polygons):
+            if idx not in self.ROI_set:
+                face.material_index = len(obj.data.materials)
+        # Add a new material to the object
+        obj.data.materials.append(mat2)
+
     # Set a color of an object
     def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0)):
+        """ [summary]
+        Applies uniform color to the entire object
+
+        ### Parameters
+        1. target : bpy_types.Object
+         - The part which color is to be set
+        2. color : tuple
+         - color specified by tuple of (r, g, b, a)
+        """
         # Make a new material
         mat = bpy.data.materials.new(name="Material")
         mat.use_nodes = True
@@ -1043,4 +1108,11 @@ class VirtExp:
 
     # Method to remove an object from the scene
     def remove_object(self, obj):
+        """Removes the object from the scene
+
+        Parameters
+        ----------
+        obj : _type_
+            _description_
+        """
         bpy.data.objects.remove(obj, do_unlink=True, do_id_user=True, do_ui_user=True)
