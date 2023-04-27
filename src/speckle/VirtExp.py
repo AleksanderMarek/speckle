@@ -125,7 +125,7 @@ class VirtExp:
                 or line.startswith("*ROI_Elems")
             ]
             if len(tag_lines) == 2:  # No *ROI_Elems
-                tag_lines.append(i + 1)
+                tag_lines.append(len(lines) + 1)
             # Define vertices + scale to mm
             # MatchID rotates the mesh by 180 deg around x-axis
             # TODO: Rotate the coordinate point properly
@@ -167,7 +167,7 @@ class VirtExp:
             # Select the target and apply the material
             ob = bpy.context.view_layer.objects.active
             if ob is None:
-                bpy.context.view_layer.objects.active = ob
+                bpy.context.view_layer.objects.active = part
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.solidify(thickness=thickness)
             bpy.ops.object.editmode_toggle()
