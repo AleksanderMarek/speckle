@@ -46,7 +46,7 @@ class VirtExp:
         bpy.ops.wm.read_factory_settings(use_empty=True)
 
     # ADDING PARTS TO THE SCENE
-    def add_rect_target(self, rect_size):
+    def add_rect_target(self, rect_size, position=(0, 0, 0), rotation=(1, 0, 0, 0)):
         """
         The method adds a rectangular object to the scene with the size of
         defined by rect_size. The object is placed at the origin of the
@@ -81,6 +81,10 @@ class VirtExp:
         # Add thickness to the mesh
         part.modifiers.new(name="solidify", type="SOLIDIFY")
         part.modifiers["solidify"].thickness = thickness
+        # Move and rotate the object
+        part.location = position
+        part.rotation_mode = "QUATERNION"
+        part.rotation_quaternion = rotation
         # Deselect object
         part.select_set(False)
         # Return the object
@@ -522,7 +526,8 @@ class VirtExp:
         obj.data.materials.append(mat2)
 
     # Set a color of an object
-    def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0)):
+    def set_part_color(self, target, color=(0.5, 0.5, 0.5, 1.0), metallic=0.0,
+                       specular=0.5, roughness=0.5):
         """ [summary]
         Applies uniform color to the entire object
 
@@ -536,6 +541,12 @@ class VirtExp:
         mat = bpy.data.materials.new(name="Material")
         mat.use_nodes = True
         mat.node_tree.nodes["Principled BSDF"].inputs[0].default_value = color
+        # Metallic
+        mat.node_tree.nodes["Principled BSDF"].inputs[6].default_value = metallic
+        # Specular
+        mat.node_tree.nodes["Principled BSDF"].inputs[7].default_value = specular
+        # Roughness
+        mat.node_tree.nodes["Principled BSDF"].inputs[9].default_value = roughness
         # Select the target and apply the material
         ob = bpy.context.view_layer.objects.active
         if ob is None:
